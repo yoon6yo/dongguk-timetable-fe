@@ -4,6 +4,7 @@ import { scoreCombination, type ScoreBreakdown, type Weights } from "./scoring";
 export interface CourseCandidate {
   courseId: string;
   blocks: TimeBlock[];
+  credit: number;
 }
 
 export interface Group {
@@ -19,6 +20,13 @@ export interface GenerateOptions {
   nodeBudget?: number;
   /** Stop exploring after this much wall-clock time, whichever budget hits first. */
   timeBudgetMs?: number;
+  /**
+   * Upper bound only — a combination totalling anywhere from 0 up to this
+   * value is valid and returned. There is no lower bound: a combo well under
+   * this cap is just as eligible as one that fills it exactly. Omit (or
+   * leave undefined/null) for no credit constraint at all.
+   */
+  maxCredit?: number | null;
 }
 
 export interface GenerateResult {
@@ -28,10 +36,11 @@ export interface GenerateResult {
   capped: boolean;
 }
 
-const DEFAULT_OPTIONS: Required<GenerateOptions> = {
+const DEFAULT_OPTIONS: Required<Omit<GenerateOptions, "maxCredit">> & Pick<GenerateOptions, "maxCredit"> = {
   maxResults: 500,
   nodeBudget: 200_000,
   timeBudgetMs: 1500,
+  maxCredit: null,
 };
 
 /**
@@ -39,8 +48,8 @@ const DEFAULT_OPTIONS: Required<GenerateOptions> = {
  * cartesian product + filter, since e.g. 6 groups x ~10 candidates each is up
  * to 10^6 combinations naive, most of which conflict early. Groups are
  * explored smallest-candidate-count first so dead ends are hit sooner. Every
- * partial pick is conflict-checked before recursing, so no wasted work is
- * ever done on a branch that's already invalid.
+ * partial pick is conflict-checked (and, if set, credit-checked) before
+ * recursing, so no wasted work is ever done on a branch that's already invalid.
  */
 export function generateCombinations(groups: Group[], options: GenerateOptions = {}): GenerateResult {
   const opts = { ...DEFAULT_OPTIONS, ...options };
@@ -66,7 +75,7 @@ export function generateCombinations(groups: Group[], options: GenerateOptions =
     return false;
   }
 
-  function backtrack(index: number, picked: string[], usedBlocks: TimeBlock[]): void {
+  function backtrack(index: number, picked: string[], usedBlocks: TimeBlock[], usedCredit: number): void {
     if (shouldStop()) return;
     nodesVisited++;
 
@@ -78,38 +87,43 @@ export function generateCombinations(groups: Group[], options: GenerateOptions =
     const group = orderedGroups[index];
 
     if (!group.required) {
-      backtrack(index + 1, picked, usedBlocks);
+      backtrack(index + 1, picked, usedBlocks, usedCredit);
       if (shouldStop()) return;
     }
 
     for (const candidate of group.candidates) {
       if (hasConflict(candidate.blocks, usedBlocks)) continue;
+      if (opts.maxCredit != null && usedCredit + candidate.credit > opts.maxCredit) continue;
+
       picked.push(candidate.courseId);
-      backtrack(index + 1, picked, usedBlocks.concat(candidate.blocks));
+      backtrack(index + 1, picked, usedBlocks.concat(candidate.blocks), usedCredit + candidate.credit);
       picked.pop();
       if (shouldStop()) return;
     }
   }
 
-  backtrack(0, [], []);
+  backtrack(0, [], [], 0);
   return { combinations, capped };
 }
 
 export interface ScoredCombination {
   courseIds: string[];
   score: ScoreBreakdown;
+  totalCredit: number;
 }
 
 /** Scores and ranks (descending by total) a set of combinations already produced by generateCombinations. */
 export function rankCombinations(
   combinations: string[][],
   blocksByCourseId: Map<string, TimeBlock[]>,
-  weights: Weights
+  weights: Weights,
+  creditByCourseId: Map<string, number>
 ): ScoredCombination[] {
   return combinations
     .map((courseIds) => {
       const blocks = courseIds.flatMap((id) => blocksByCourseId.get(id) ?? []);
-      return { courseIds, score: scoreCombination(blocks, weights) };
+      const totalCredit = courseIds.reduce((sum, id) => sum + (creditByCourseId.get(id) ?? 0), 0);
+      return { courseIds, score: scoreCombination(blocks, weights), totalCredit };
     })
     .sort((a, b) => b.score.total - a.score.total);
 }

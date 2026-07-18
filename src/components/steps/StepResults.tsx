@@ -7,6 +7,7 @@ import { exportElementAsPng } from "@/lib/exportImage";
 import type { CourseRow } from "@/lib/types";
 import { useCombinationWorker } from "@/hooks/useCombinationWorker";
 import { useCoursesStore } from "@/store/coursesStore";
+import { useCreditLimitStore } from "@/store/creditLimitStore";
 import { useGroupsStore } from "@/store/groupsStore";
 import { useWeightsStore } from "@/store/weightsStore";
 
@@ -17,6 +18,7 @@ export function StepResults() {
   const groups = useGroupsStore((s) => s.groups);
   const courses = useCoursesStore((s) => s.courses);
   const weights = useWeightsStore((s) => s.weights);
+  const maxCredit = useCreditLimitStore((s) => s.maxCredit);
   const { running, result, error, run } = useCombinationWorker();
 
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
@@ -26,11 +28,11 @@ export function StepResults() {
   const courseById = useMemo(() => new Map(courses.map((c) => [String(c.id), c])), [courses]);
 
   function handleGenerate() {
-    const { groups: generatorGroups, blocksByCourseId } = buildGenerationInput(groups, courses);
+    const { groups: generatorGroups } = buildGenerationInput(groups, courses);
     run({
       groups: generatorGroups,
-      blockEntries: Array.from(blocksByCourseId.entries()),
       weights,
+      maxCredit,
       maxResults: 200,
     });
     setSelectedIndex(null);
@@ -84,7 +86,9 @@ export function StepResults() {
                 >
                   <div className="flex items-center justify-between">
                     <span className="font-semibold">#{idx + 1}</span>
-                    <span className="text-text-secondary">점수 {combo.score.total.toFixed(1)}</span>
+                    <span className="text-text-secondary">
+                      {combo.totalCredit}학점 · 점수 {combo.score.total.toFixed(1)}
+                    </span>
                   </div>
                   <p className="mt-1 text-text-secondary">
                     {combo.courseIds

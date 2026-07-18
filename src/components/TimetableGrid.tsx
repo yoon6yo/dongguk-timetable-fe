@@ -45,62 +45,68 @@ export function TimetableGrid({ courses }: { courses: CourseRow[] }) {
 
   return (
     <div>
-      <div
-        className="grid overflow-hidden rounded-lg border border-neutral text-sm"
-        style={{
-          gridTemplateColumns: `3.5rem repeat(${dayColumns.length}, 1fr)`,
-          gridTemplateRows: `2.25rem repeat(${layout.totalRows}, 1.6rem)`,
-        }}
-      >
-        <div className="border-b border-r border-neutral bg-surface" style={{ gridColumn: 1, gridRow: 1 }} />
-        {dayColumns.map((day, colIdx) => (
-          <div
-            key={day}
-            className="flex items-center justify-center border-b border-r border-neutral bg-surface font-medium"
-            style={{ gridColumn: colIdx + 2, gridRow: 1 }}
-          >
-            {DAY_LABELS[day]}
-          </div>
-        ))}
-
-        {rowIndexes.map((rowIdx) => {
-          const minutes = layout.startMinutes + rowIdx * layout.slotMinutes;
-          return (
+      {/* Grid columns use a fixed minWidth (not just 1fr) so on narrow viewports
+          the day columns stay legible and the container scrolls horizontally
+          instead of squeezing every column unreadably thin. */}
+      <div className="overflow-x-auto rounded-lg border border-neutral">
+        <div
+          className="grid text-sm"
+          style={{
+            gridTemplateColumns: `3.5rem repeat(${dayColumns.length}, minmax(4.5rem, 1fr))`,
+            gridTemplateRows: `2.25rem repeat(${layout.totalRows}, 1.6rem)`,
+            minWidth: `${3.5 + dayColumns.length * 4.5}rem`,
+          }}
+        >
+          <div className="border-b border-r border-neutral bg-surface" style={{ gridColumn: 1, gridRow: 1 }} />
+          {dayColumns.map((day, colIdx) => (
             <div
-              key={`time-${rowIdx}`}
-              className="flex items-start justify-end border-b border-r border-neutral pr-1 text-[11px] text-text-secondary"
-              style={{ gridColumn: 1, gridRow: rowIdx + 2 }}
+              key={day}
+              className="flex items-center justify-center border-b border-r border-neutral bg-surface font-medium"
+              style={{ gridColumn: colIdx + 2, gridRow: 1 }}
             >
-              {minutes % 60 === 0 ? formatHourLabel(minutes) : ""}
+              {DAY_LABELS[day]}
             </div>
-          );
-        })}
+          ))}
 
-        {dayColumns.map((day, colIdx) =>
-          rowIndexes.map((rowIdx) => (
-            <div
-              key={`cell-${day}-${rowIdx}`}
-              className="border-b border-r border-neutral"
-              style={{ gridColumn: colIdx + 2, gridRow: rowIdx + 2 }}
-            />
-          ))
-        )}
+          {rowIndexes.map((rowIdx) => {
+            const minutes = layout.startMinutes + rowIdx * layout.slotMinutes;
+            return (
+              <div
+                key={`time-${rowIdx}`}
+                className="flex items-start justify-end border-b border-r border-neutral pr-1 text-[11px] text-text-secondary"
+                style={{ gridColumn: 1, gridRow: rowIdx + 2 }}
+              >
+                {minutes % 60 === 0 ? formatHourLabel(minutes) : ""}
+              </div>
+            );
+          })}
 
-        {blocks.map((block, idx) => {
-          const colIdx = dayColumns.indexOf(block.dayOfWeek);
-          if (colIdx === -1) return null;
-          const { start, span } = rowRange(block, layout);
-          return (
-            <div
-              key={idx}
-              className="m-0.5 overflow-hidden rounded-md border border-primary/40 bg-primary-tint px-1 py-0.5 text-[11px] leading-tight text-foreground"
-              style={{ gridColumn: colIdx + 2, gridRow: `${start + 1} / span ${span}` }}
-            >
-              <div className="truncate font-semibold">{block.course.courseName}</div>
-              {block.classroom && <div className="truncate text-text-secondary">{block.classroom}</div>}
-            </div>
-          );
-        })}
+          {dayColumns.map((day, colIdx) =>
+            rowIndexes.map((rowIdx) => (
+              <div
+                key={`cell-${day}-${rowIdx}`}
+                className="border-b border-r border-neutral"
+                style={{ gridColumn: colIdx + 2, gridRow: rowIdx + 2 }}
+              />
+            ))
+          )}
+
+          {blocks.map((block, idx) => {
+            const colIdx = dayColumns.indexOf(block.dayOfWeek);
+            if (colIdx === -1) return null;
+            const { start, span } = rowRange(block, layout);
+            return (
+              <div
+                key={idx}
+                className="m-0.5 overflow-hidden rounded-md border border-primary/40 bg-primary-tint px-1 py-0.5 text-[11px] leading-tight text-foreground"
+                style={{ gridColumn: colIdx + 2, gridRow: `${start + 1} / span ${span}` }}
+              >
+                <div className="truncate font-semibold">{block.course.courseName}</div>
+                {block.classroom && <div className="truncate text-text-secondary">{block.classroom}</div>}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {unparsed.length > 0 && (

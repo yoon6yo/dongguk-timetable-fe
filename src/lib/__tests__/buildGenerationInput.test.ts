@@ -99,5 +99,27 @@ describe("buildGenerationInput", () => {
     const result = buildGenerationInput([], []);
     expect(result.groups).toEqual([]);
     expect(result.blocksByCourseId.size).toBe(0);
+    expect(result.creditByCourseId.size).toBe(0);
+  });
+
+  it("parses the DB's string credit into a number on each candidate and in creditByCourseId", () => {
+    const courses = [makeCourse(1, { credit: "3.0" }), makeCourse(2, { credit: "1.5" })];
+    const groups = [{ id: "g1", name: "전공", required: true, courseIds: [1, 2] }];
+
+    const { groups: resolved, creditByCourseId } = buildGenerationInput(groups, courses);
+
+    expect(resolved[0].candidates.map((c) => c.credit)).toEqual([3, 1.5]);
+    expect(creditByCourseId.get("1")).toBe(3);
+    expect(creditByCourseId.get("2")).toBe(1.5);
+  });
+
+  it("falls back to 0 credit rather than NaN when the DB value is unparsable", () => {
+    const courses = [makeCourse(1, { credit: "학점없음" })];
+    const groups = [{ id: "g1", name: "전공", required: true, courseIds: [1] }];
+
+    const { groups: resolved, creditByCourseId } = buildGenerationInput(groups, courses);
+
+    expect(resolved[0].candidates[0].credit).toBe(0);
+    expect(creditByCourseId.get("1")).toBe(0);
   });
 });

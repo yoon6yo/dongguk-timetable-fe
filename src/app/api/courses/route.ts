@@ -1,22 +1,27 @@
-import { getCoursesForSemester } from "@/lib/courses";
-import { getPool } from "@/lib/db";
-import { getLatestSemester } from "@/lib/semesters";
+import { getLatestSemesterCacheEntry } from "@/lib/latestSemesterCache";
 
 /**
  * Ships the entire latest-semester course catalog in one response — search,
  * filtering, and combination generation all happen client-side (see project
  * plan section 4), so there is deliberately no query-string filtering here.
+ *
+ * Backed by a 5-minute server-side TTL cache (the crawler only updates MySQL
+ * once a day) plus an ETag: a client re-fetching on page refresh sends
+ * If-None-Match and gets a bodyless 304 when nothing changed, instead of
+ * re-downloading the whole catalog every time.
  */
-export async function GET() {
-  const pool = getPool();
+export async function GET(request: Request) {
   try {
-    const semester = await getLatestSemester(pool);
-    if (!semester) {
-      return Response.json({ semester: null, courses: [] }, { status: 404 });
+    const { data, etag } = await getLatestSemesterCacheEntry();
+
+    if (request.headers.get("if-none-match") === etag) {
+      return new Response(null, { status: 304, headers: { ETag: etag } });
     }
 
-    const courses = await getCoursesForSemester(pool, semester.id);
-    return Response.json({ semester, courses });
+    return Response.json(data, {
+      status: data.semester ? 200 : 404,
+      headers: { ETag: etag, "Cache-Control": "no-cache" },
+    });
   } catch (error) {
     console.error("[/api/courses] DB query failed:", error);
     return Response.json({ error: "일시적인 서버 오류입니다" }, { status: 500 });
