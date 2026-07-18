@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: timetable-web
+  namespace: timetable
+  labels:
+    app: web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      imagePullSecrets:
+        - name: ghcr-secret
+      containers:
+        - name: web
+          # Static manifest baseline — CI updates this to a sha-tagged image on every deploy
+          # via `kubectl set image` (see .github/workflows/deploy.yml).
+          image: ghcr.io/yoon6yo/dongguk-timetable-fe:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: PORT
+              value: "3000"
+            - name: DB_HOST
+              value: mysql
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: timetable-mysql-secret
+                  key: database
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: timetable-mysql-secret
+                  key: app-user
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: timetable-mysql-secret
+                  key: app-password
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 300m
+              memory: 256Mi
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10

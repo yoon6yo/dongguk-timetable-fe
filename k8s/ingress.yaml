@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: timetable-web-ingress
+  namespace: timetable
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - PLACEHOLDER_DOMAIN
+      secretName: timetable-web-tls
+  rules:
+    - host: PLACEHOLDER_DOMAIN
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: timetable-web
+                port:
+                  number: 80
