@@ -1,6 +1,7 @@
 "use client";
 
 import type { Weights } from "@/lib/scoring";
+import { MAX_SCHOOL_CREDIT, MIN_SCHOOL_CREDIT, useCreditLimitStore } from "@/store/creditLimitStore";
 import { useWeightsStore } from "@/store/weightsStore";
 
 const SLIDERS: { key: keyof Weights; label: string; low: string; high: string }[] = [
@@ -14,9 +15,29 @@ export function StepWeights() {
   const weights = useWeightsStore((s) => s.weights);
   const setWeight = useWeightsStore((s) => s.setWeight);
   const reset = useWeightsStore((s) => s.reset);
+  const maxCredit = useCreditLimitStore((s) => s.maxCredit);
+  const setMaxCredit = useCreditLimitStore((s) => s.setMaxCredit);
 
   return (
     <div className="space-y-6">
+      <div>
+        <label className="mb-1 block text-sm font-medium">목표 학점 (상한)</label>
+        <p className="mb-2 text-xs text-text-secondary">
+          동국대 수강신청 규정상 {MIN_SCHOOL_CREDIT}~{MAX_SCHOOL_CREDIT}학점 사이입니다. 여기서 정한 학점을
+          넘는 조합은 아예 제외되고, 다 채우지 않고 그 이하인 조합도 함께 보여드려요 — 꼭 정확히 맞출 필요는
+          없습니다.
+        </p>
+        <input
+          type="number"
+          min={MIN_SCHOOL_CREDIT}
+          max={MAX_SCHOOL_CREDIT}
+          step={0.5}
+          value={maxCredit ?? ""}
+          onChange={(e) => setMaxCredit(e.target.value === "" ? null : Number(e.target.value))}
+          className="w-full rounded-lg border border-neutral px-3 py-2 text-sm outline-none focus:border-primary"
+        />
+      </div>
+
       <p className="text-text-secondary">
         슬라이더를 조절해 시간표를 어떤 기준으로 정렬할지 정하세요. &ldquo;오전 ↔ 오후 선호&rdquo;는 가운데(50)에
         두면 신경 쓰지 않는다는 뜻이고, 양쪽 끝으로 갈수록 그 방향을 강하게 반영합니다.
