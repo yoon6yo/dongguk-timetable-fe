@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+/* Dongguk University brand colors — approximate PANTONE->hex conversions
+   (PANTONE 144C orange, PANTONE Warm Gray 4C) — verify against the official
+   design guide before this ships publicly. Defined as plain :root vars (not
+   directly in @theme) so the dark-mode override below can actually change
+   them at runtime; @theme inline then re-exposes them as bg-primary/text-primary/etc. */
+:root {
+  --background: #fafaf8;
+  --foreground: #1f1b16;
+  --surface: #ffffff;
+  --primary: #ed8b00;
+  --primary-hover: #c97600;
+  --primary-tint: #fde9c8;
+  --neutral: #bcb3a6;
+  --text-secondary: #6b6459;
+  --success: #2e9e5b;
+  --error: #d64545;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #1c1815;
+    --foreground: #f2ece4;
+    --surface: #262019;
+    --primary: #f59e1e;
+    --primary-hover: #ffb648;
+    --primary-tint: #3a2e1a;
+    --neutral: #4a443c;
+    --text-secondary: #b8afa2;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-tint: var(--primary-tint);
+  --color-neutral: var(--neutral);
+  --color-text-secondary: var(--text-secondary);
+  --color-success: var(--success);
+  --color-error: var(--error);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
