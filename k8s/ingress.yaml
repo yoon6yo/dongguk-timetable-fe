@@ -1,16 +1,19 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: timetable-web-ingress
+  name: timetable-fe-ingress
   namespace: timetable
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-prod
+    # Per-client-IP rate limit — this is a public repo/API now, so this stops a
+    # bot/script hammering /api/courses before it ever reaches the pod or MySQL.
+    nginx.ingress.kubernetes.io/limit-rps: "5"
 spec:
   ingressClassName: nginx
   tls:
     - hosts:
         - PLACEHOLDER_DOMAIN
-      secretName: timetable-web-tls
+      secretName: timetable-fe-tls
   rules:
     - host: PLACEHOLDER_DOMAIN
       http:
@@ -19,6 +22,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: timetable-web
+                name: timetable-fe
                 port:
                   number: 80

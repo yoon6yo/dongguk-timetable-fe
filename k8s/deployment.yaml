@@ -1,24 +1,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: timetable-web
+  name: timetable-fe
   namespace: timetable
   labels:
-    app: web
+    app: fe
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: web
+      app: fe
   template:
     metadata:
       labels:
-        app: web
+        app: fe
     spec:
       imagePullSecrets:
         - name: ghcr-secret
       containers:
-        - name: web
+        - name: fe
           # Static manifest baseline — CI updates this to a sha-tagged image on every deploy
           # via `kubectl set image` (see .github/workflows/deploy.yml).
           image: ghcr.io/yoon6yo/dongguk-timetable-fe:latest

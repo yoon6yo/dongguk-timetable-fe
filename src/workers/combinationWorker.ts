@@ -1,5 +1,4 @@
 import { generateCombinations, rankCombinations, type Group, type ScoredCombination } from "@/lib/combinationGenerator";
-import type { TimeBlock } from "@/lib/conflict";
 import type { Weights } from "@/lib/scoring";
 
 /**
@@ -10,10 +9,10 @@ import type { Weights } from "@/lib/scoring";
  */
 export interface CombinationWorkerRequest {
   groups: Group[];
-  /** Map isn't always structured-clone-friendly across older engines, so entries travel as a plain array. */
-  blockEntries: [string, TimeBlock[]][];
   weights: Weights;
   maxResults?: number;
+  /** Upper bound on total credit — see combinationGenerator's GenerateOptions.maxCredit. */
+  maxCredit?: number | null;
 }
 
 export interface CombinationWorkerResponse {
@@ -22,10 +21,16 @@ export interface CombinationWorkerResponse {
 }
 
 addEventListener("message", (event: MessageEvent<CombinationWorkerRequest>) => {
-  const { groups, blockEntries, weights, maxResults } = event.data;
+  const { groups, weights, maxResults, maxCredit } = event.data;
 
-  const { combinations, capped } = generateCombinations(groups, { maxResults });
-  const ranked = rankCombinations(combinations, new Map(blockEntries), weights);
+  // Every candidate already carries its own blocks/credit (see Group/CourseCandidate),
+  // so both lookup maps rankCombinations needs are derived here rather than
+  // shipped separately over postMessage.
+  const blocksByCourseId = new Map(groups.flatMap((g) => g.candidates.map((c) => [c.courseId, c.blocks] as const)));
+  const creditByCourseId = new Map(groups.flatMap((g) => g.candidates.map((c) => [c.courseId, c.credit] as const)));
+
+  const { combinations, capped } = generateCombinations(groups, { maxResults, maxCredit });
+  const ranked = rankCombinations(combinations, blocksByCourseId, weights, creditByCourseId);
 
   const response: CombinationWorkerResponse = { combinations: ranked, capped };
   // `self` resolves to Window's postMessage overload (requiring targetOrigin) under

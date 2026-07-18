@@ -66,5 +66,5 @@ jobs:
           key: ${{ secrets.K8S_SSH_KEY }}
           script: |
             IMAGE="ghcr.io/${{ github.repository }}:sha-$(echo ${{ github.sha }} | cut -c1-7)"
-            kubectl set image deployment/timetable-web web=$IMAGE -n timetable
-            kubectl rollout status deployment/timetable-web -n timetable --timeout=120s
+            kubectl set image deployment/timetable-fe fe=$IMAGE -n timetable
+            kubectl rollout status deployment/timetable-fe -n timetable --timeout=120s
