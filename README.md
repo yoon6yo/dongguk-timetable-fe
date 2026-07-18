@@ -3,12 +3,12 @@
 동국대 시간표 마법사 — 그룹을 만들고 과목을 담으면 충돌 없는 시간표 조합을 찾아주는 웹 앱
 (Next.js, 프론트엔드 + 읽기 전용 API Routes가 한 앱).
 
-강의 데이터를 수집하는 크롤러([dongguk-timetable](https://github.com/yoon6yo/dongguk-timetable), private)와는
+강의 데이터를 수집하는 크롤러([dongguk-timetable-be](https://github.com/yoon6yo/dongguk-timetable-be), private)와는
 별도 레포입니다 — 이 레포는 MySQL을 **읽기만** 하고, 학교 계정 로그인 로직은 전혀 포함하지 않습니다.
 
 ## 로컬 개발
 
-이 레포 혼자서는 MySQL이 없어 동작하지 않습니다 — `dongguk-timetable`(private) 레포의
+이 레포 혼자서는 MySQL이 없어 동작하지 않습니다 — `dongguk-timetable-be`(private) 레포의
 `docker compose up -d mysql` + `scribe --migrate-only`로 로컬 DB를 먼저 준비한 뒤:
 
 ```bash
@@ -42,14 +42,17 @@ Web Worker 배선 자체(`useCombinationWorker`, `combinationWorker.ts`)는 jsdo
 ## 배포
 
 `k8s/`의 매니페스트는 **이미 존재하는** `timetable` 네임스페이스 / `mysql` Service / `timetable-mysql-secret`
-/ `ghcr-secret`을 전제로 합니다 — 이것들은 전부 `dongguk-timetable`(private) 레포의 `k8s/setup.sh`가
+/ `ghcr-secret`을 전제로 합니다 — 이것들은 전부 `dongguk-timetable-be`(private) 레포의 `k8s/setup.sh`가
 한 번만 만들어둡니다. 이 레포는 그 위에 자신의 Deployment/Service/Ingress만 추가로 얹습니다:
 
 ```bash
 kubectl apply -f k8s/deployment.yaml
 kubectl apply -f k8s/service.yaml
-kubectl apply -f k8s/ingress.yaml   # PLACEHOLDER_DOMAIN을 실제 도메인으로 바꾼 뒤
+kubectl apply -f k8s/ingress.yaml
 ```
+
+도메인은 별도로 구매하지 않고 `timetable.211.245.16.202.nip.io` (무료 wildcard DNS, k3s 호스트 IP로
+자동 resolve됨)를 씁니다 — IP가 바뀌면 `k8s/ingress.yaml`의 host만 새 IP로 바꿔주면 됩니다.
 
 이후 `main`에 push하면 GitHub Actions가 이미지를 빌드해 GHCR에 올리고, SSH로 접속해
 `kubectl set image`로 롤링 업데이트합니다 (`.github/workflows/deploy.yml`).

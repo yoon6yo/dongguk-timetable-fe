@@ -12,10 +12,10 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - PLACEHOLDER_DOMAIN
+        - timetable.211.245.16.202.nip.io
       secretName: timetable-fe-tls
   rules:
-    - host: PLACEHOLDER_DOMAIN
+    - host: timetable.211.245.16.202.nip.io
       http:
         paths:
           - path: /
