@@ -56,7 +56,7 @@ jobs:
     environment: production
     steps:
       # No build-arg secrets are passed above — DB credentials only ever exist as a
-      # k8s Secret (timetable-mysql-secret) created once by the dongguk-timetable
+      # k8s Secret (timetable-mysql-secret) created once by the dongguk-timetable-be
       # (private, scribe) repo's k8s/setup.sh, injected at pod runtime via secretKeyRef.
       - name: SSH deploy
         uses: appleboy/ssh-action@v1
