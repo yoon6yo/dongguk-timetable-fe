@@ -50,7 +50,9 @@ describe("buildGenerationInput", () => {
 
     expect(resolved).toHaveLength(1);
     expect(resolved[0].candidates.map((c) => c.courseId)).toEqual(["1", "2"]);
-    expect(blocksByCourseId.get("1")).toEqual([{ dayOfWeek: 2, startMinutes: 900, endMinutes: 990 }]);
+    expect(blocksByCourseId.get("1")).toEqual([
+      { dayOfWeek: 2, startMinutes: 900, endMinutes: 990, classroom: "342" },
+    ]);
   });
 
   it("silently drops a courseId that no longer exists in the fetched catalog", () => {

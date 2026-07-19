@@ -79,8 +79,8 @@ describe("toTimeBlocks", () => {
   it("converts well-formed rows", () => {
     const blocks = toTimeBlocks([schedule({}), schedule({ dayOfWeek: 4 })]);
     expect(blocks).toEqual([
-      { dayOfWeek: 2, startMinutes: 900, endMinutes: 990 },
-      { dayOfWeek: 4, startMinutes: 900, endMinutes: 990 },
+      { dayOfWeek: 2, startMinutes: 900, endMinutes: 990, classroom: "342" },
+      { dayOfWeek: 4, startMinutes: 900, endMinutes: 990, classroom: "342" },
     ]);
   });
 

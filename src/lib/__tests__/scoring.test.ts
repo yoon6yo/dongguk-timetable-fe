@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { timeToMinutes, type TimeBlock } from "../conflict";
 import {
+  computeCommuteScore,
   computeFreeDayScore,
   computeGapScore,
   computeLunchScore,
@@ -10,8 +11,8 @@ import {
   type Weights,
 } from "../scoring";
 
-function block(dayOfWeek: number, start: string, end: string): TimeBlock {
-  return { dayOfWeek, startMinutes: timeToMinutes(start), endMinutes: timeToMinutes(end) };
+function block(dayOfWeek: number, start: string, end: string, classroom: string | null = null): TimeBlock {
+  return { dayOfWeek, startMinutes: timeToMinutes(start), endMinutes: timeToMinutes(end), classroom };
 }
 
 describe("computeGapScore", () => {
@@ -120,23 +121,70 @@ describe("computeTimeOfDayScore", () => {
   });
 });
 
+describe("computeCommuteScore", () => {
+  it("is 100 with no classes or a single class", () => {
+    expect(computeCommuteScore([])).toBe(100);
+    expect(computeCommuteScore([block(2, "09:00", "10:30", "342(혜화관 207-342 342 강의실)")])).toBe(100);
+  });
+
+  it("is 100 for back-to-back classes in the same building", () => {
+    const blocks = [
+      block(2, "09:00", "10:30", "342(혜화관 207-342 342 강의실)"),
+      block(2, "10:30", "12:00", "101(혜화관 101 강의실)"),
+    ];
+    expect(computeCommuteScore(blocks)).toBe(100);
+  });
+
+  it("drops below 100 when consecutive classes are in different buildings", () => {
+    const blocks = [
+      block(2, "09:00", "10:30", "342(혜화관 207-342 342 강의실)"),
+      block(2, "10:30", "12:00", "B256(법학/만해관 303-254 강의실_스마트)"),
+    ];
+    expect(computeCommuteScore(blocks)).toBeLessThan(100);
+    expect(computeCommuteScore(blocks)).toBeGreaterThanOrEqual(0);
+  });
+
+  it("does not penalize a transition when a building can't be resolved", () => {
+    const blocks = [
+      block(2, "09:00", "10:30", "342(혜화관 207-342 342 강의실)"),
+      block(2, "10:30", "12:00", "온라인"),
+    ];
+    expect(computeCommuteScore(blocks)).toBe(100);
+  });
+
+  it("sums distances across multiple transitions and days independently", () => {
+    const oneTransition = [
+      block(2, "09:00", "10:30", "342(혜화관 207-342 342 강의실)"),
+      block(2, "10:30", "12:00", "B256(법학/만해관 303-254 강의실_스마트)"),
+    ];
+    const twoTransitions = [
+      ...oneTransition,
+      block(4, "09:00", "10:30", "342(혜화관 207-342 342 강의실)"),
+      block(4, "10:30", "12:00", "B256(법학/만해관 303-254 강의실_스마트)"),
+    ];
+    expect(computeCommuteScore(twoTransitions)).toBeLessThan(computeCommuteScore(oneTransition));
+  });
+});
+
 describe("scoreCombination", () => {
   const neutralBlocks = [block(2, "09:00", "10:30"), block(4, "09:00", "10:30")];
 
   it("falls back to a plain average when every weight is 0/neutral", () => {
-    const weights: Weights = { gap: 0, lunch: 0, freeDay: 0, timeOfDay: 50 };
+    const weights: Weights = { gap: 0, lunch: 0, freeDay: 0, timeOfDay: 50, commute: 0 };
     const result = scoreCombination(neutralBlocks, weights);
-    expect(result.total).toBeCloseTo((result.gap + result.lunch + result.freeDay + result.timeOfDay) / 4);
+    expect(result.total).toBeCloseTo(
+      (result.gap + result.lunch + result.freeDay + result.timeOfDay + result.commute) / 5
+    );
   });
 
   it("total equals the sub-score exactly when only one weight is nonzero", () => {
-    const weights: Weights = { gap: 100, lunch: 0, freeDay: 0, timeOfDay: 50 };
+    const weights: Weights = { gap: 100, lunch: 0, freeDay: 0, timeOfDay: 50, commute: 0 };
     const result = scoreCombination(neutralBlocks, weights);
     expect(result.total).toBeCloseTo(result.gap);
   });
 
   it("timeOfDay at an extreme slider value carries full importance", () => {
-    const weights: Weights = { gap: 0, lunch: 0, freeDay: 0, timeOfDay: 0 };
+    const weights: Weights = { gap: 0, lunch: 0, freeDay: 0, timeOfDay: 0, commute: 0 };
     const result = scoreCombination(neutralBlocks, weights);
     expect(result.total).toBeCloseTo(result.timeOfDay);
   });

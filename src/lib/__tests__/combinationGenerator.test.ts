@@ -12,7 +12,7 @@ function candidate(courseId: string, blocks: TimeBlock[], credit = 3): CourseCan
   return { courseId, blocks, credit };
 }
 
-const NEUTRAL_WEIGHTS: Weights = { gap: 50, lunch: 50, freeDay: 50, timeOfDay: 50 };
+const NEUTRAL_WEIGHTS: Weights = { gap: 50, lunch: 50, freeDay: 50, timeOfDay: 50, commute: 50 };
 
 describe("generateCombinations", () => {
   it("a required group contributes exactly one candidate to every combination", () => {
@@ -226,7 +226,7 @@ describe("rankCombinations", () => {
       ["gap-heavy", 3],
     ]);
     const combinations = [["gap-heavy"], ["gap-free"]];
-    const weights: Weights = { gap: 100, lunch: 0, freeDay: 0, timeOfDay: 50 };
+    const weights: Weights = { gap: 100, lunch: 0, freeDay: 0, timeOfDay: 50, commute: 0 };
 
     const ranked = rankCombinations(combinations, blocksByCourseId, weights, creditByCourseId);
 

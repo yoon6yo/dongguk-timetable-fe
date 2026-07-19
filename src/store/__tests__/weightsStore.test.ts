@@ -9,13 +9,13 @@ beforeEach(() => {
 
 describe("useWeightsStore", () => {
   it("defaults every slider to 50 (neutral)", () => {
-    expect(useWeightsStore.getState().weights).toEqual({ gap: 50, lunch: 50, freeDay: 50, timeOfDay: 50 });
+    expect(useWeightsStore.getState().weights).toEqual({ gap: 50, lunch: 50, freeDay: 50, timeOfDay: 50, commute: 50 });
   });
 
   it("updates a single slider without touching the others", () => {
     useWeightsStore.getState().setWeight("gap", 80);
 
-    expect(useWeightsStore.getState().weights).toEqual({ gap: 80, lunch: 50, freeDay: 50, timeOfDay: 50 });
+    expect(useWeightsStore.getState().weights).toEqual({ gap: 80, lunch: 50, freeDay: 50, timeOfDay: 50, commute: 50 });
   });
 
   it("clamps values above 100 down to 100", () => {
