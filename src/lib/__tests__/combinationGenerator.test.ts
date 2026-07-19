@@ -257,6 +257,24 @@ describe("generateCombinations", () => {
       expect(combinations).toContainEqual([]);
       expect(combinations).toContainEqual(["A"]);
     });
+
+    it("prunes a whole dead subtree immediately when even its best case can't reach the floor, instead of exhausting the node budget exploring it", () => {
+      // 4 groups x 6 candidates x 1 credit each = 4 credits max possible,
+      // nowhere near minCredit=100. Without the early prune, exploring this
+      // tree to every leaf would blow past the tiny nodeBudget below; with
+      // it, the very first check (index 0, usedCredit 0, maxRemainingCredit
+      // 4 < 100) discards the whole tree in one step.
+      const groups: Group[] = Array.from({ length: 4 }, (_, g) => ({
+        id: `g${g}`,
+        required: true,
+        candidates: Array.from({ length: 6 }, (_, i) => candidate(`g${g}-c${i}`, [], 1)),
+      }));
+
+      const { combinations, capped } = generateCombinations(groups, { minCredit: 100, nodeBudget: 5 });
+
+      expect(combinations).toEqual([]);
+      expect(capped).toBe(false);
+    });
   });
 });
 
