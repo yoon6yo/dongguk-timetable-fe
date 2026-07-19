@@ -27,10 +27,11 @@ export interface GenerateOptions {
   maxCredit?: number | null;
   /**
    * Lower bound — a completed combination totalling less than this is
-   * dropped. Checked only once a combination is complete (not per-step),
-   * since a partial pick can still cross the threshold as later groups are
-   * added — unlike maxCredit, there's no valid early-prune point. Omit (or
-   * leave undefined/null) for no floor at all.
+   * dropped. A partial pick is pruned early only once it's provable that no
+   * amount of remaining picks can reach the floor (see maxRemainingCredit in
+   * generateCombinations); it's still re-checked at completion since a
+   * branch can validly cross the floor partway through. Omit (or leave
+   * undefined/null) for no floor at all.
    */
   minCredit?: number | null;
 }
@@ -63,6 +64,18 @@ export function generateCombinations(groups: Group[], options: GenerateOptions =
   const opts = { ...DEFAULT_OPTIONS, ...options };
   const orderedGroups = [...groups].sort((a, b) => a.candidates.length - b.candidates.length);
 
+  // maxRemainingCredit[i] = the most credit a branch could still add by
+  // taking the single highest-credit candidate from every group at index
+  // i..end (optional groups can also validly add 0, but for an upper-bound
+  // prune we only care about the best case). Lets backtrack() give up on a
+  // branch immediately once even that best case can't reach minCredit,
+  // instead of exploring it all the way to a leaf just to discard it there.
+  const maxRemainingCredit: number[] = new Array(orderedGroups.length + 1).fill(0);
+  for (let i = orderedGroups.length - 1; i >= 0; i--) {
+    const groupMax = orderedGroups[i].candidates.reduce((max, c) => Math.max(max, c.credit), 0);
+    maxRemainingCredit[i] = maxRemainingCredit[i + 1] + groupMax;
+  }
+
   const combinations: string[][] = [];
   let nodesVisited = 0;
   let capped = false;
@@ -92,6 +105,10 @@ export function generateCombinations(groups: Group[], options: GenerateOptions =
         combinations.push([...picked]);
       }
       return;
+    }
+
+    if (opts.minCredit != null && usedCredit + maxRemainingCredit[index] < opts.minCredit) {
+      return; // even the best case from here can't reach the floor
     }
 
     const group = orderedGroups[index];

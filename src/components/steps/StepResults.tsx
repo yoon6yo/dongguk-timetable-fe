@@ -8,7 +8,7 @@ import { exportElementAsPng } from "@/lib/exportImage";
 import type { CourseRow } from "@/lib/types";
 import { useCombinationWorker } from "@/hooks/useCombinationWorker";
 import { useCoursesStore } from "@/store/coursesStore";
-import { MIN_SCHOOL_CREDIT, useCreditLimitStore } from "@/store/creditLimitStore";
+import { MAX_SCHOOL_CREDIT, MIN_SCHOOL_CREDIT, useCreditLimitStore } from "@/store/creditLimitStore";
 import { useGroupsStore } from "@/store/groupsStore";
 import { useWeightsStore } from "@/store/weightsStore";
 
@@ -80,6 +80,12 @@ export function StepResults() {
             </p>
           )}
           <p className="text-sm text-text-secondary">{result.combinations.length}개의 시간표 조합을 찾았습니다.</p>
+          {result.combinations.length === 0 && (
+            <p className="text-xs text-text-secondary">
+              시간 충돌이 없는 조합이 없거나, 선택한 과목들의 학점 합이 {MIN_SCHOOL_CREDIT}~{MAX_SCHOOL_CREDIT}학점
+              범위를 벗어났을 수 있어요. 우선순위 단계에서 목표 학점을 확인하거나 과목을 더 담아보세요.
+            </p>
+          )}
 
           <ul className="space-y-2">
             {result.combinations.map((combo, idx) => (
