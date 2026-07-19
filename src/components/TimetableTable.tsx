@@ -1,3 +1,4 @@
+import { getCompetitionRate } from "@/lib/competitionRate";
 import { DAY_LABELS } from "@/lib/timeGrid";
 import type { CourseRow, ScheduleRow } from "@/lib/types";
 
@@ -32,6 +33,7 @@ export function TimetableTable({ courses }: { courses: CourseRow[] }) {
             <th className="p-2 font-medium">시간</th>
             <th className="p-2 font-medium">강의실</th>
             <th className="p-2 font-medium">학점</th>
+            <th className="p-2 font-medium">경쟁률</th>
           </tr>
         </thead>
         <tbody>
@@ -39,6 +41,7 @@ export function TimetableTable({ courses }: { courses: CourseRow[] }) {
             const day = schedule?.dayOfWeek != null ? DAY_LABELS[schedule.dayOfWeek] : null;
             const start = formatTime(schedule?.startTime ?? null);
             const end = formatTime(schedule?.endTime ?? null);
+            const competitionRate = getCompetitionRate(course);
             return (
               <tr key={idx} className="border-t border-neutral">
                 <td className="p-2">{course.courseName}</td>
@@ -47,6 +50,9 @@ export function TimetableTable({ courses }: { courses: CourseRow[] }) {
                 <td className="p-2">{start && end ? `${start} ~ ${end}` : (schedule?.rawText ?? "-")}</td>
                 <td className="p-2">{schedule?.classroom ?? "-"}</td>
                 <td className="p-2">{course.credit}</td>
+                <td className="p-2">
+                  {competitionRate.ratePercent}%{competitionRate.isMock && <span className="text-neutral"> ·추정</span>}
+                </td>
               </tr>
             );
           })}

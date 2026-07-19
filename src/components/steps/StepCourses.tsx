@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 
+import { getCompetitionRate } from "@/lib/competitionRate";
 import { listColleges, listDepartments, searchCourses } from "@/lib/courseSearch";
 import { useCoursesStore } from "@/store/coursesStore";
 import { useGroupsStore } from "@/store/groupsStore";
@@ -111,6 +112,7 @@ export function StepCourses() {
       <ul className="max-h-96 space-y-1 overflow-y-auto">
         {results.map((course) => {
           const alreadyAdded = selectedGroup?.courseIds.includes(course.id) ?? false;
+          const competitionRate = getCompetitionRate(course);
           return (
             <li
               key={course.id}
@@ -120,6 +122,10 @@ export function StepCourses() {
                 <p className="font-medium">{course.courseName}</p>
                 <p className="text-xs text-text-secondary">
                   {course.courseNo} · {course.professor ?? "교수 미정"} · {course.department ?? course.college}
+                </p>
+                <p className="mt-0.5 text-xs text-text-secondary">
+                  경쟁률 {competitionRate.enrolled}/{competitionRate.capacity}명 ({competitionRate.ratePercent}%)
+                  {competitionRate.isMock && <span className="ml-1 text-neutral">· 추정</span>}
                 </p>
               </div>
               <button
