@@ -1,4 +1,4 @@
-import { classroomDistanceMeters } from "./buildingCoordinates";
+import { distanceBetweenBuildingNames, extractBuildingName } from "./buildingCoordinates";
 import type { TimeBlock } from "./conflict";
 
 /**
@@ -50,10 +50,9 @@ function groupByDay(blocks: TimeBlock[]): Map<number, TimeBlock[]> {
   return byDay;
 }
 
-/** Sum of idle minutes between consecutive classes on the same day, across the week. */
-export function computeGapScore(blocks: TimeBlock[]): number {
+function gapScoreFromGroups(byDay: Map<number, TimeBlock[]>): number {
   let totalGap = 0;
-  for (const dayBlocks of groupByDay(blocks).values()) {
+  for (const dayBlocks of byDay.values()) {
     for (let i = 1; i < dayBlocks.length; i++) {
       totalGap += Math.max(0, dayBlocks[i].startMinutes - dayBlocks[i - 1].endMinutes);
     }
@@ -61,9 +60,12 @@ export function computeGapScore(blocks: TimeBlock[]): number {
   return clamp(100 * (1 - totalGap / GAP_REFERENCE_MINUTES));
 }
 
-/** % of days-with-at-least-one-class that don't have anything overlapping the lunch window. */
-export function computeLunchScore(blocks: TimeBlock[]): number {
-  const byDay = groupByDay(blocks);
+/** Sum of idle minutes between consecutive classes on the same day, across the week. */
+export function computeGapScore(blocks: TimeBlock[]): number {
+  return gapScoreFromGroups(groupByDay(blocks));
+}
+
+function lunchScoreFromGroups(byDay: Map<number, TimeBlock[]>): number {
   if (byDay.size === 0) return 100;
 
   let lunchFreeDays = 0;
@@ -74,6 +76,11 @@ export function computeLunchScore(blocks: TimeBlock[]): number {
     if (!overlapsLunch) lunchFreeDays++;
   }
   return (100 * lunchFreeDays) / byDay.size;
+}
+
+/** % of days-with-at-least-one-class that don't have anything overlapping the lunch window. */
+export function computeLunchScore(blocks: TimeBlock[]): number {
+  return lunchScoreFromGroups(groupByDay(blocks));
 }
 
 /** % of Mon–Fri with no classes at all (Sat/Sun classes don't count against this). */
@@ -91,27 +98,37 @@ export function computeTimeOfDayScore(blocks: TimeBlock[], target: number): numb
   return clamp(100 - Math.abs(position - target));
 }
 
-/** Sum of straight-line building-to-building distance between consecutive
- * classes on the same day, across the week. Transitions where either class's
- * building can't be resolved (unrecognized/missing classroom text) are
- * skipped rather than penalized, since "unknown" isn't evidence of a long walk. */
-export function computeCommuteScore(blocks: TimeBlock[]): number {
+function commuteScoreFromGroups(byDay: Map<number, TimeBlock[]>): number {
   let totalMeters = 0;
-  for (const dayBlocks of groupByDay(blocks).values()) {
+  for (const dayBlocks of byDay.values()) {
+    // Resolve each block's building name once per day rather than twice per
+    // transition (once as a destination, once as the next transition's origin).
+    const buildingNames = dayBlocks.map((b) => extractBuildingName(b.classroom));
     for (let i = 1; i < dayBlocks.length; i++) {
-      const distance = classroomDistanceMeters(dayBlocks[i - 1].classroom, dayBlocks[i].classroom);
+      const distance = distanceBetweenBuildingNames(buildingNames[i - 1], buildingNames[i]);
       if (distance != null) totalMeters += distance;
     }
   }
   return clamp(100 * (1 - totalMeters / COMMUTE_REFERENCE_METERS));
 }
 
+/** Sum of straight-line building-to-building distance between consecutive
+ * classes on the same day, across the week. Transitions where either class's
+ * building can't be resolved (unrecognized/missing classroom text) are
+ * skipped rather than penalized, since "unknown" isn't evidence of a long walk. */
+export function computeCommuteScore(blocks: TimeBlock[]): number {
+  return commuteScoreFromGroups(groupByDay(blocks));
+}
+
 export function scoreCombination(blocks: TimeBlock[], weights: Weights): ScoreBreakdown {
-  const gap = computeGapScore(blocks);
-  const lunch = computeLunchScore(blocks);
+  // Grouped once and shared across gap/lunch/commute instead of each
+  // independently re-bucketing and re-sorting the same blocks by day.
+  const byDay = groupByDay(blocks);
+  const gap = gapScoreFromGroups(byDay);
+  const lunch = lunchScoreFromGroups(byDay);
   const freeDay = computeFreeDayScore(blocks);
   const timeOfDay = computeTimeOfDayScore(blocks, weights.timeOfDay);
-  const commute = computeCommuteScore(blocks);
+  const commute = commuteScoreFromGroups(byDay);
 
   const timeOfDayImportance = Math.abs(weights.timeOfDay - 50) * 2;
   const totalImportance = weights.gap + weights.lunch + weights.freeDay + weights.commute + timeOfDayImportance;

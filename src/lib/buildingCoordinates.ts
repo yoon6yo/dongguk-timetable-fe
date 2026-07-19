@@ -90,15 +90,19 @@ export function haversineDistanceMeters(
   return 2 * EARTH_RADIUS_METERS * Math.asin(Math.min(1, Math.sqrt(h)));
 }
 
+/** Distance in meters between two already-resolved building names, or null
+ * if either is unresolved. Split out from classroomDistanceMeters so a
+ * caller resolving many raw classroom strings up front (e.g. scoring.ts,
+ * across a whole day's blocks) can call extractBuildingName once per block
+ * instead of twice per pair. haversineDistanceMeters already returns exact
+ * 0 for identical coordinates, so nameA === nameB needs no special case. */
+export function distanceBetweenBuildingNames(nameA: string | null, nameB: string | null): number | null {
+  if (!nameA || !nameB) return null;
+  return haversineDistanceMeters(BUILDING_COORDINATES[nameA], BUILDING_COORDINATES[nameB]);
+}
+
 /** Distance in meters between two classroom raw strings, or null if either
  * building can't be resolved (caller should treat as "no penalty"). */
 export function classroomDistanceMeters(a: string | null | undefined, b: string | null | undefined): number | null {
-  const nameA = extractBuildingName(a);
-  const nameB = extractBuildingName(b);
-  if (!nameA || !nameB) return null;
-  if (nameA === nameB) return 0;
-
-  const coordA = BUILDING_COORDINATES[nameA];
-  const coordB = BUILDING_COORDINATES[nameB];
-  return haversineDistanceMeters(coordA, coordB);
+  return distanceBetweenBuildingNames(extractBuildingName(a), extractBuildingName(b));
 }
