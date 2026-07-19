@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 
 import { buildGenerationInput } from "@/lib/buildGenerationInput";
+import { exportTimetableAsCsv } from "@/lib/exportCsv";
 import { exportElementAsPng } from "@/lib/exportImage";
 import type { CourseRow } from "@/lib/types";
 import { useCombinationWorker } from "@/hooks/useCombinationWorker";
@@ -38,9 +39,14 @@ export function StepResults() {
     setSelectedIndex(null);
   }
 
-  async function handleExport() {
+  async function handleExportPng() {
     if (!exportRef.current) return;
     await exportElementAsPng(exportRef.current, "timetable.png");
+  }
+
+  function handleExportCsv() {
+    if (selectedCourses.length === 0) return;
+    exportTimetableAsCsv(selectedCourses, "timetable.csv");
   }
 
   const selected = selectedIndex != null ? result?.combinations[selectedIndex] : undefined;
@@ -122,13 +128,22 @@ export function StepResults() {
                     표
                   </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleExport}
-                  className="rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
-                >
-                  이미지로 저장
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleExportPng}
+                    className="rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
+                  >
+                    이미지로 저장
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleExportCsv}
+                    className="rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
+                  >
+                    CSV로 저장
+                  </button>
+                </div>
               </div>
 
               <div ref={exportRef} className="bg-background p-2">
