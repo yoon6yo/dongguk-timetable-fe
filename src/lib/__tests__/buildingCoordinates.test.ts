@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   BUILDING_COORDINATES,
   classroomDistanceMeters,
+  distanceBetweenBuildingNames,
   extractBuildingName,
   haversineDistanceMeters,
 } from "../buildingCoordinates";
@@ -75,5 +76,29 @@ describe("classroomDistanceMeters", () => {
     expect(classroomDistanceMeters(null, "342(혜화관 207-342 342 강의실)")).toBeNull();
     expect(classroomDistanceMeters("342(혜화관 207-342 342 강의실)", "온라인")).toBeNull();
     expect(classroomDistanceMeters(null, null)).toBeNull();
+  });
+});
+
+describe("distanceBetweenBuildingNames", () => {
+  it("is 0 for the same building name", () => {
+    expect(distanceBetweenBuildingNames("혜화관", "혜화관")).toBe(0);
+  });
+
+  it("is positive for two different building names", () => {
+    const distance = distanceBetweenBuildingNames("혜화관", "학술관");
+    expect(distance).not.toBeNull();
+    expect(distance).toBeGreaterThan(0);
+  });
+
+  it("is null when either name is null", () => {
+    expect(distanceBetweenBuildingNames(null, "혜화관")).toBeNull();
+    expect(distanceBetweenBuildingNames("혜화관", null)).toBeNull();
+    expect(distanceBetweenBuildingNames(null, null)).toBeNull();
+  });
+
+  it("agrees with classroomDistanceMeters given the equivalent raw strings", () => {
+    const viaNames = distanceBetweenBuildingNames("혜화관", "학술관");
+    const viaRaw = classroomDistanceMeters("342(혜화관 207-342 342 강의실)", "101(학술관 101 강의실)");
+    expect(viaNames).toBe(viaRaw);
   });
 });

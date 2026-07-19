@@ -1,6 +1,20 @@
 import { describe, expect, it } from "vitest";
 
-import { activeDayColumns, computeGridLayout, rowRange } from "../timeGrid";
+import { activeDayColumns, computeGridLayout, formatScheduleTime, rowRange } from "../timeGrid";
+
+describe("formatScheduleTime", () => {
+  it("truncates HH:MM:SS to HH:MM", () => {
+    expect(formatScheduleTime("16:30:00")).toBe("16:30");
+  });
+
+  it("passes through HH:MM unchanged", () => {
+    expect(formatScheduleTime("09:00")).toBe("09:00");
+  });
+
+  it("returns null for null input", () => {
+    expect(formatScheduleTime(null)).toBeNull();
+  });
+});
 
 describe("computeGridLayout", () => {
   it("defaults to 09:00-18:00 when given no blocks", () => {

@@ -1,5 +1,12 @@
 export const DAY_LABELS: Record<number, string> = { 1: "월", 2: "화", 3: "수", 4: "목", 5: "금", 6: "토", 7: "일" };
 
+/** "HH:MM:SS" (mysql2 TIME format) or "HH:MM" -> "HH:MM", or null for a
+ * missing/unparsed time. Shared by every schedule-time display (grid, table,
+ * CSV export) so they can't silently drift out of sync with each other. */
+export function formatScheduleTime(time: string | null): string | null {
+  return time ? time.slice(0, 5) : null;
+}
+
 export interface GridLayout {
   startMinutes: number;
   endMinutes: number;

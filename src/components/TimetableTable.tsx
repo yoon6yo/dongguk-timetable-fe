@@ -1,26 +1,10 @@
 import { getCompetitionRate } from "@/lib/competitionRate";
-import { DAY_LABELS } from "@/lib/timeGrid";
-import type { CourseRow, ScheduleRow } from "@/lib/types";
-
-interface Row {
-  course: CourseRow;
-  schedule: ScheduleRow | null;
-}
-
-function toRows(courses: CourseRow[]): Row[] {
-  return courses.flatMap((course): Row[] =>
-    course.schedules.length > 0
-      ? course.schedules.map((schedule): Row => ({ course, schedule }))
-      : [{ course, schedule: null }]
-  );
-}
-
-function formatTime(time: string | null): string | null {
-  return time ? time.slice(0, 5) : null;
-}
+import { expandCourseSchedules } from "@/lib/expandSchedules";
+import { DAY_LABELS, formatScheduleTime } from "@/lib/timeGrid";
+import type { CourseRow } from "@/lib/types";
 
 export function TimetableTable({ courses }: { courses: CourseRow[] }) {
-  const rows = toRows(courses);
+  const rows = expandCourseSchedules(courses);
 
   return (
     <div className="overflow-x-auto rounded-lg border border-neutral">
@@ -39,8 +23,8 @@ export function TimetableTable({ courses }: { courses: CourseRow[] }) {
         <tbody>
           {rows.map(({ course, schedule }, idx) => {
             const day = schedule?.dayOfWeek != null ? DAY_LABELS[schedule.dayOfWeek] : null;
-            const start = formatTime(schedule?.startTime ?? null);
-            const end = formatTime(schedule?.endTime ?? null);
+            const start = formatScheduleTime(schedule?.startTime ?? null);
+            const end = formatScheduleTime(schedule?.endTime ?? null);
             const competitionRate = getCompetitionRate(course);
             return (
               <tr key={idx} className="border-t border-neutral">
