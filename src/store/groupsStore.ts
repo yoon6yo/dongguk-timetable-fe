@@ -11,7 +11,10 @@ export interface CourseGroup {
 
 interface GroupsState {
   groups: CourseGroup[];
-  addGroup: (name: string) => void;
+  /** name is optional — naming a group is a nice-to-have, not a required
+   * step, so an omitted/blank name falls back to "그룹 N" rather than
+   * blocking group creation on typing something first. */
+  addGroup: (name?: string) => void;
   removeGroup: (id: string) => void;
   renameGroup: (id: string, name: string) => void;
   toggleRequired: (id: string) => void;
@@ -31,9 +34,13 @@ export const useGroupsStore = create<GroupsState>()(
       groups: [],
 
       addGroup: (name) =>
-        set((state) => ({
-          groups: [...state.groups, { id: makeGroupId(), name, required: true, courseIds: [] }],
-        })),
+        set((state) => {
+          const trimmed = name?.trim();
+          const finalName = trimmed && trimmed.length > 0 ? trimmed : `그룹 ${state.groups.length + 1}`;
+          return {
+            groups: [...state.groups, { id: makeGroupId(), name: finalName, required: true, courseIds: [] }],
+          };
+        }),
 
       removeGroup: (id) => set((state) => ({ groups: state.groups.filter((g) => g.id !== id) })),
 
