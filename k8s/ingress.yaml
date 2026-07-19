@@ -12,10 +12,10 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - timetable.211.245.16.202.nip.io
+        - dongguk-timetable.duckdns.org
       secretName: timetable-fe-tls
   rules:
-    - host: timetable.211.245.16.202.nip.io
+    - host: dongguk-timetable.duckdns.org
       http:
         paths:
           - path: /
