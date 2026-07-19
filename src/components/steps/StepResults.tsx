@@ -8,7 +8,7 @@ import { exportElementAsPng } from "@/lib/exportImage";
 import type { CourseRow } from "@/lib/types";
 import { useCombinationWorker } from "@/hooks/useCombinationWorker";
 import { useCoursesStore } from "@/store/coursesStore";
-import { useCreditLimitStore } from "@/store/creditLimitStore";
+import { MIN_SCHOOL_CREDIT, useCreditLimitStore } from "@/store/creditLimitStore";
 import { useGroupsStore } from "@/store/groupsStore";
 import { useWeightsStore } from "@/store/weightsStore";
 
@@ -34,6 +34,7 @@ export function StepResults() {
       groups: generatorGroups,
       weights,
       maxCredit,
+      minCredit: MIN_SCHOOL_CREDIT,
       maxResults: 200,
     });
     setSelectedIndex(null);

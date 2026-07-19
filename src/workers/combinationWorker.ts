@@ -13,6 +13,8 @@ export interface CombinationWorkerRequest {
   maxResults?: number;
   /** Upper bound on total credit — see combinationGenerator's GenerateOptions.maxCredit. */
   maxCredit?: number | null;
+  /** Lower bound on total credit — see combinationGenerator's GenerateOptions.minCredit. */
+  minCredit?: number | null;
 }
 
 export interface CombinationWorkerResponse {
@@ -21,7 +23,7 @@ export interface CombinationWorkerResponse {
 }
 
 addEventListener("message", (event: MessageEvent<CombinationWorkerRequest>) => {
-  const { groups, weights, maxResults, maxCredit } = event.data;
+  const { groups, weights, maxResults, maxCredit, minCredit } = event.data;
 
   // Every candidate already carries its own blocks/credit (see Group/CourseCandidate),
   // so both lookup maps rankCombinations needs are derived here rather than
@@ -29,7 +31,7 @@ addEventListener("message", (event: MessageEvent<CombinationWorkerRequest>) => {
   const blocksByCourseId = new Map(groups.flatMap((g) => g.candidates.map((c) => [c.courseId, c.blocks] as const)));
   const creditByCourseId = new Map(groups.flatMap((g) => g.candidates.map((c) => [c.courseId, c.credit] as const)));
 
-  const { combinations, capped } = generateCombinations(groups, { maxResults, maxCredit });
+  const { combinations, capped } = generateCombinations(groups, { maxResults, maxCredit, minCredit });
   const ranked = rankCombinations(combinations, blocksByCourseId, weights, creditByCourseId);
 
   const response: CombinationWorkerResponse = { combinations: ranked, capped };
