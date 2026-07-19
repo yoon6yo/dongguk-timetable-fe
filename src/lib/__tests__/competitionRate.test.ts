@@ -3,9 +3,15 @@ import { describe, expect, it } from "vitest";
 import { getCompetitionRate } from "../competitionRate";
 
 describe("getCompetitionRate", () => {
-  it("uses real data and is not marked as mock when capacity is positive", () => {
+  // `enrolled` (SESN_SEM_TKCRS_AMT) turned out not to be a headcount field —
+  // real captured values are large round multiples of 30000 unrelated to
+  // capacity, "AMT" meaning amount/fee, not person count. So real data is
+  // never trusted right now (ENROLLED_FIELD_TRUSTED = false in the source)
+  // even when capacity looks like a plausible real class size — every course
+  // gets the mock until BE re-maps `enrolled` to an actual headcount field.
+  it("always mocks for now, even when capacity looks like real data", () => {
     const result = getCompetitionRate({ id: 1, capacity: 30, enrolled: 15 });
-    expect(result).toEqual({ capacity: 30, enrolled: 15, ratePercent: 50, isMock: false });
+    expect(result.isMock).toBe(true);
   });
 
   it("falls back to a mock when capacity is 0 (pre-registration snapshot)", () => {
@@ -41,8 +47,8 @@ describe("getCompetitionRate", () => {
     expect(rates.size).toBeGreaterThan(1);
   });
 
-  it("treats enrolled=0 with positive real capacity as a real 0%, not a mock", () => {
+  it("still mocks even when enrolled is legitimately 0 with a positive capacity", () => {
     const result = getCompetitionRate({ id: 1, capacity: 30, enrolled: 0 });
-    expect(result).toEqual({ capacity: 30, enrolled: 0, ratePercent: 0, isMock: false });
+    expect(result.isMock).toBe(true);
   });
 });
