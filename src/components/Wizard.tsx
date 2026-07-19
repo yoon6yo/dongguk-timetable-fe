@@ -2,7 +2,6 @@
 
 import { useWizardStore, WIZARD_STEPS } from "@/store/wizardStore";
 
-import { StepCourses } from "./steps/StepCourses";
 import { StepGroups } from "./steps/StepGroups";
 import { StepResults } from "./steps/StepResults";
 import { StepStart } from "./steps/StepStart";
@@ -10,8 +9,7 @@ import { StepWeights } from "./steps/StepWeights";
 
 const STEP_TITLES: Record<(typeof WIZARD_STEPS)[number], string> = {
   start: "시작",
-  groups: "그룹 만들기",
-  courses: "과목 담기",
+  groups: "그룹 & 과목",
   weights: "우선순위 설정",
   results: "결과",
 };
@@ -19,7 +17,6 @@ const STEP_TITLES: Record<(typeof WIZARD_STEPS)[number], string> = {
 const STEP_COMPONENTS = {
   start: StepStart,
   groups: StepGroups,
-  courses: StepCourses,
   weights: StepWeights,
   results: StepResults,
 } as const;

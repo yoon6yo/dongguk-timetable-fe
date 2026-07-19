@@ -17,6 +17,25 @@ describe("useGroupsStore", () => {
     expect(groups[0].id).toBeTruthy();
   });
 
+  it("auto-generates a name when none is given", () => {
+    useGroupsStore.getState().addGroup();
+
+    expect(useGroupsStore.getState().groups[0].name).toBe("그룹 1");
+  });
+
+  it("auto-generates a name when given an empty/whitespace-only string", () => {
+    useGroupsStore.getState().addGroup("   ");
+
+    expect(useGroupsStore.getState().groups[0].name).toBe("그룹 1");
+  });
+
+  it("auto-generated names count existing groups, not just auto-named ones", () => {
+    useGroupsStore.getState().addGroup("전공 필수");
+    useGroupsStore.getState().addGroup();
+
+    expect(useGroupsStore.getState().groups[1].name).toBe("그룹 2");
+  });
+
   it("assigns distinct ids to different groups", () => {
     useGroupsStore.getState().addGroup("A");
     useGroupsStore.getState().addGroup("B");
