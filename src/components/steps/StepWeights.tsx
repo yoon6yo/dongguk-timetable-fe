@@ -27,9 +27,8 @@ export function StepWeights() {
           <span className="font-semibold text-primary">{maxCredit ?? MAX_SCHOOL_CREDIT}학점</span>
         </div>
         <p className="mb-3 text-xs text-text-secondary">
-          동국대 수강신청 규정상 {MIN_SCHOOL_CREDIT}~{MAX_SCHOOL_CREDIT}학점 사이입니다. 여기서 정한 학점을
-          넘는 조합은 아예 제외되고, 다 채우지 않고 그 이하인 조합도 함께 보여드려요 — 꼭 정확히 맞출 필요는
-          없습니다.
+          동국대 수강신청 규정상 {MIN_SCHOOL_CREDIT}~{MAX_SCHOOL_CREDIT}학점 사이여야 합니다. 여기서 정한
+          학점을 넘거나 {MIN_SCHOOL_CREDIT}학점 미만인 조합은 결과에서 제외돼요.
         </p>
         <input
           type="range"

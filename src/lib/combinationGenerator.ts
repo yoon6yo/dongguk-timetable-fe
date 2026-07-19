@@ -21,12 +21,18 @@ export interface GenerateOptions {
   /** Stop exploring after this much wall-clock time, whichever budget hits first. */
   timeBudgetMs?: number;
   /**
-   * Upper bound only — a combination totalling anywhere from 0 up to this
-   * value is valid and returned. There is no lower bound: a combo well under
-   * this cap is just as eligible as one that fills it exactly. Omit (or
-   * leave undefined/null) for no credit constraint at all.
+   * Upper bound — a combination totalling anywhere from 0 up to this value
+   * is otherwise eligible. Omit (or leave undefined/null) for no cap.
    */
   maxCredit?: number | null;
+  /**
+   * Lower bound — a completed combination totalling less than this is
+   * dropped. Checked only once a combination is complete (not per-step),
+   * since a partial pick can still cross the threshold as later groups are
+   * added — unlike maxCredit, there's no valid early-prune point. Omit (or
+   * leave undefined/null) for no floor at all.
+   */
+  minCredit?: number | null;
 }
 
 export interface GenerateResult {
@@ -36,11 +42,13 @@ export interface GenerateResult {
   capped: boolean;
 }
 
-const DEFAULT_OPTIONS: Required<Omit<GenerateOptions, "maxCredit">> & Pick<GenerateOptions, "maxCredit"> = {
+const DEFAULT_OPTIONS: Required<Omit<GenerateOptions, "maxCredit" | "minCredit">> &
+  Pick<GenerateOptions, "maxCredit" | "minCredit"> = {
   maxResults: 500,
   nodeBudget: 200_000,
   timeBudgetMs: 1500,
   maxCredit: null,
+  minCredit: null,
 };
 
 /**
@@ -80,7 +88,9 @@ export function generateCombinations(groups: Group[], options: GenerateOptions =
     nodesVisited++;
 
     if (index === orderedGroups.length) {
-      combinations.push([...picked]);
+      if (opts.minCredit == null || usedCredit >= opts.minCredit) {
+        combinations.push([...picked]);
+      }
       return;
     }
 

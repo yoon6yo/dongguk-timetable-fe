@@ -213,6 +213,51 @@ describe("generateCombinations", () => {
       expect(combinations).toEqual([]); // any single candidate alone is fine, but no full combo fits
     });
   });
+
+  describe("minCredit", () => {
+    it("excludes a completed combination whose total credit is below the floor", () => {
+      const groups: Group[] = [
+        { id: "g1", required: false, candidates: [candidate("A", [block(1, "09:00", "10:30")], 3)] },
+      ];
+
+      const { combinations } = generateCombinations(groups, { minCredit: 12 });
+
+      expect(combinations).toEqual([]); // 0 credits (skip) and 3 credits (A) are both under 12
+    });
+
+    it("includes a combination exactly at the floor", () => {
+      const groups: Group[] = [
+        { id: "g1", required: true, candidates: [candidate("A", [block(1, "09:00", "10:30")], 12)] },
+      ];
+
+      const { combinations } = generateCombinations(groups, { minCredit: 12 });
+
+      expect(combinations).toEqual([["A"]]);
+    });
+
+    it("combines with maxCredit to enforce a 12-21 range", () => {
+      const groups: Group[] = [
+        { id: "g1", required: true, candidates: [candidate("low", [], 6)] },
+        { id: "g2", required: false, candidates: [candidate("extra", [], 6)] },
+      ];
+
+      const { combinations } = generateCombinations(groups, { minCredit: 12, maxCredit: 21 });
+
+      // "low" alone is 6 credits (under 12, excluded); "low"+"extra" is 12 (kept)
+      expect(combinations).toEqual([["low", "extra"]]);
+    });
+
+    it("with no minCredit set, low-credit combinations are unaffected (backward compatible)", () => {
+      const groups: Group[] = [
+        { id: "g1", required: false, candidates: [candidate("A", [block(1, "09:00", "10:30")], 3)] },
+      ];
+
+      const { combinations } = generateCombinations(groups);
+
+      expect(combinations).toContainEqual([]);
+      expect(combinations).toContainEqual(["A"]);
+    });
+  });
 });
 
 describe("rankCombinations", () => {
