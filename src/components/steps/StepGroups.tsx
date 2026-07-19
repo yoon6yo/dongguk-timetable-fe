@@ -38,7 +38,7 @@ export function StepGroups() {
         <button
           type="button"
           onClick={handleAdd}
-          className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-150 hover:bg-primary-hover hover:shadow active:scale-95 active:shadow-none"
+          className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-white shadow-button transition-all duration-150 hover:bg-primary-hover active:scale-95 active:bg-primary-active active:shadow-none"
         >
           추가
         </button>
@@ -48,7 +48,7 @@ export function StepGroups() {
         {groups.map((group) => (
           <li
             key={group.id}
-            className="flex items-center justify-between rounded-lg border border-neutral p-3 transition-colors hover:border-neutral/70"
+            className="flex items-center justify-between rounded-xl bg-surface p-3 shadow-card transition-shadow hover:shadow-card-hover"
           >
             <div>
               <input

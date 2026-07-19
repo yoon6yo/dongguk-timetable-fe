@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { useCoursesStore } from "@/store/coursesStore";
 
 export function StepStart() {
-  const { semester, status, error, fetchCourses, courses } = useCoursesStore();
+  const { semester, status, error, fetchCourses } = useCoursesStore();
 
   useEffect(() => {
     fetchCourses();
@@ -26,10 +26,9 @@ export function StepStart() {
       )}
 
       {status === "loaded" && semester && (
-        <div className="rounded-lg border border-primary/30 bg-primary-tint p-4">
+        <div className="rounded-xl border border-primary/30 bg-primary-tint p-4 shadow-card">
           <p className="text-sm text-text-secondary">최신 학기</p>
           <p className="text-lg font-semibold">{semester.label}</p>
-          <p className="mt-1 text-sm text-text-secondary">{courses.length}개 과목 로드됨</p>
         </div>
       )}
 

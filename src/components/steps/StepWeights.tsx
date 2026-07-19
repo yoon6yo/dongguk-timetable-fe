@@ -20,22 +20,29 @@ export function StepWeights() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <label className="mb-1 block text-sm font-medium">목표 학점 (상한)</label>
-        <p className="mb-2 text-xs text-text-secondary">
+      <div className="rounded-xl bg-surface p-4 shadow-card">
+        <div className="mb-1 flex items-center justify-between text-sm">
+          <span className="font-medium">목표 학점 (상한)</span>
+          <span className="font-semibold text-primary">{maxCredit ?? MAX_SCHOOL_CREDIT}학점</span>
+        </div>
+        <p className="mb-3 text-xs text-text-secondary">
           동국대 수강신청 규정상 {MIN_SCHOOL_CREDIT}~{MAX_SCHOOL_CREDIT}학점 사이입니다. 여기서 정한 학점을
           넘는 조합은 아예 제외되고, 다 채우지 않고 그 이하인 조합도 함께 보여드려요 — 꼭 정확히 맞출 필요는
           없습니다.
         </p>
         <input
-          type="number"
+          type="range"
           min={MIN_SCHOOL_CREDIT}
           max={MAX_SCHOOL_CREDIT}
-          step={0.5}
-          value={maxCredit ?? ""}
-          onChange={(e) => setMaxCredit(e.target.value === "" ? null : Number(e.target.value))}
-          className="w-full rounded-lg border border-neutral px-3 py-2 text-sm outline-none focus:border-primary"
+          step={1}
+          value={maxCredit ?? MAX_SCHOOL_CREDIT}
+          onChange={(e) => setMaxCredit(Number(e.target.value))}
+          className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-neutral/30 accent-primary transition-opacity hover:opacity-90"
         />
+        <div className="mt-1 flex justify-between text-xs text-text-secondary">
+          <span>{MIN_SCHOOL_CREDIT}학점</span>
+          <span>{MAX_SCHOOL_CREDIT}학점</span>
+        </div>
       </div>
 
       <p className="text-text-secondary">
@@ -43,28 +50,30 @@ export function StepWeights() {
         두면 신경 쓰지 않는다는 뜻이고, 양쪽 끝으로 갈수록 그 방향을 강하게 반영합니다.
       </p>
 
-      {SLIDERS.map(({ key, label, low, high }) => (
-        <div key={key}>
-          <div className="mb-2 flex items-center justify-between text-sm">
-            <span className="font-medium">{label}</span>
-            <span className="sr-only" aria-live="polite">
-              {weights[key]}
-            </span>
+      <div className="space-y-3 rounded-xl bg-surface p-4 shadow-card">
+        {SLIDERS.map(({ key, label, low, high }, idx) => (
+          <div key={key} className={idx > 0 ? "border-t border-neutral/20 pt-3" : ""}>
+            <div className="mb-2 flex items-center justify-between text-sm">
+              <span className="font-medium">{label}</span>
+              <span className="sr-only" aria-live="polite">
+                {weights[key]}
+              </span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={weights[key]}
+              onChange={(e) => setWeight(key, Number(e.target.value))}
+              className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-neutral/30 accent-primary transition-opacity hover:opacity-90"
+            />
+            <div className="mt-1 flex justify-between text-xs text-text-secondary">
+              <span>{low}</span>
+              <span>{high}</span>
+            </div>
           </div>
-          <input
-            type="range"
-            min={0}
-            max={100}
-            value={weights[key]}
-            onChange={(e) => setWeight(key, Number(e.target.value))}
-            className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-neutral/30 accent-primary transition-opacity hover:opacity-90"
-          />
-          <div className="mt-1 flex justify-between text-xs text-text-secondary">
-            <span>{low}</span>
-            <span>{high}</span>
-          </div>
-        </div>
-      ))}
+        ))}
+      </div>
 
       <button
         type="button"

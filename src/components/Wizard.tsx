@@ -91,7 +91,7 @@ export function Wizard() {
           type="button"
           onClick={back}
           disabled={stepIndex === 0}
-          className="rounded-lg px-4 py-2 text-sm font-medium text-text-secondary transition-all duration-150 hover:bg-neutral/20 active:scale-95 disabled:opacity-0"
+          className="rounded-full px-4 py-2 text-sm font-medium text-text-secondary transition-all duration-150 hover:bg-neutral/20 active:scale-95 active:bg-neutral/30 disabled:opacity-0"
         >
           이전
         </button>
@@ -99,7 +99,7 @@ export function Wizard() {
           <button
             type="button"
             onClick={next}
-            className="rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-150 hover:bg-primary-hover hover:shadow active:scale-95 active:shadow-none"
+            className="rounded-full bg-primary px-6 py-2 text-sm font-semibold text-white shadow-button transition-all duration-150 hover:bg-primary-hover active:scale-95 active:bg-primary-active active:shadow-none"
           >
             다음
           </button>

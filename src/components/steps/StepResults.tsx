@@ -58,7 +58,7 @@ export function StepResults() {
         type="button"
         onClick={handleGenerate}
         disabled={running || groups.length === 0}
-        className="rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-150 hover:bg-primary-hover hover:shadow active:scale-95 active:shadow-none disabled:scale-100 disabled:bg-neutral/30 disabled:text-text-secondary disabled:shadow-none"
+        className="rounded-full bg-primary px-6 py-2 text-sm font-semibold text-white shadow-button transition-all duration-150 hover:bg-primary-hover active:scale-95 active:bg-primary-active active:shadow-none disabled:scale-100 disabled:bg-neutral/30 disabled:text-text-secondary disabled:shadow-none"
       >
         {running ? "생성 중..." : "시간표 조합 생성하기"}
       </button>
@@ -80,15 +80,13 @@ export function StepResults() {
                 <button
                   type="button"
                   onClick={() => setSelectedIndex(idx)}
-                  className={`w-full rounded-lg border p-3 text-left text-sm transition-all duration-150 active:scale-[0.99] ${
-                    selectedIndex === idx ? "border-primary bg-primary-tint" : "border-neutral hover:border-primary/50"
+                  className={`w-full rounded-xl p-3 text-left text-sm shadow-card transition-all duration-150 hover:shadow-card-hover active:scale-[0.99] ${
+                    selectedIndex === idx ? "bg-primary-tint ring-2 ring-primary" : "bg-surface"
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <span className="font-semibold">#{idx + 1}</span>
-                    <span className="text-text-secondary">
-                      {combo.totalCredit}학점 · 점수 {combo.score.total.toFixed(1)}
-                    </span>
+                    <span className="text-text-secondary">{combo.totalCredit}학점</span>
                   </div>
                   <p className="mt-1 text-text-secondary">
                     {combo.courseIds
@@ -102,14 +100,14 @@ export function StepResults() {
           </ul>
 
           {selected && (
-            <div className="space-y-3 rounded-lg border border-neutral p-3">
+            <div className="space-y-3 rounded-xl bg-surface p-3 shadow-card">
               <div className="flex items-center justify-between">
-                <div className="flex gap-2">
+                <div className="flex gap-2 rounded-full bg-neutral/20 p-1">
                   <button
                     type="button"
                     onClick={() => setView("grid")}
                     className={`rounded-full px-3 py-1 text-xs font-semibold transition-all duration-150 active:scale-95 ${
-                      view === "grid" ? "bg-primary text-white" : "bg-neutral/30 text-text-secondary hover:bg-neutral/50"
+                      view === "grid" ? "bg-primary text-white shadow-sm" : "text-text-secondary hover:bg-neutral/30"
                     }`}
                   >
                     그리드
@@ -118,7 +116,7 @@ export function StepResults() {
                     type="button"
                     onClick={() => setView("table")}
                     className={`rounded-full px-3 py-1 text-xs font-semibold transition-all duration-150 active:scale-95 ${
-                      view === "table" ? "bg-primary text-white" : "bg-neutral/30 text-text-secondary hover:bg-neutral/50"
+                      view === "table" ? "bg-primary text-white shadow-sm" : "text-text-secondary hover:bg-neutral/30"
                     }`}
                   >
                     표
@@ -127,7 +125,7 @@ export function StepResults() {
                 <button
                   type="button"
                   onClick={handleExport}
-                  className="rounded-lg border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
+                  className="rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
                 >
                   이미지로 저장
                 </button>

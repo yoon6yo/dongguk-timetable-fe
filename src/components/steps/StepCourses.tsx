@@ -114,7 +114,7 @@ export function StepCourses() {
           return (
             <li
               key={course.id}
-              className="flex items-center justify-between rounded-lg border border-neutral p-2 text-sm"
+              className="flex items-center justify-between rounded-xl bg-surface p-2.5 text-sm shadow-card transition-shadow hover:shadow-card-hover"
             >
               <div>
                 <p className="font-medium">{course.courseName}</p>
@@ -126,7 +126,7 @@ export function StepCourses() {
                 type="button"
                 disabled={alreadyAdded}
                 onClick={() => selectedGroup && addCourseToGroup(selectedGroup.id, course.id)}
-                className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white hover:bg-primary-hover disabled:bg-neutral/30 disabled:text-text-secondary"
+                className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white shadow-button transition-all duration-150 hover:bg-primary-hover active:scale-95 active:bg-primary-active active:shadow-none disabled:scale-100 disabled:bg-neutral/30 disabled:text-text-secondary disabled:shadow-none"
               >
                 {alreadyAdded ? "담김" : "담기"}
               </button>
