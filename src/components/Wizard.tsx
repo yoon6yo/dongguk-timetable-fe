@@ -34,21 +34,50 @@ export function Wizard() {
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-2xl flex-col px-4 py-8">
-      <ol className="mb-8 flex items-center gap-2">
-        {WIZARD_STEPS.map((key, idx) => (
-          <li key={key} className="flex flex-1 items-center gap-2">
-            <div
-              className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
-                idx <= stepIndex ? "bg-primary text-white" : "bg-neutral/30 text-text-secondary"
-              }`}
-            >
-              {idx + 1}
-            </div>
-            {idx < WIZARD_STEPS.length - 1 && (
-              <div className={`h-0.5 flex-1 ${idx < stepIndex ? "bg-primary" : "bg-neutral/30"}`} />
-            )}
-          </li>
-        ))}
+      <ol className="mb-8 grid grid-flow-col items-start" style={{ gridTemplateColumns: `repeat(${WIZARD_STEPS.length}, 1fr)` }}>
+        {WIZARD_STEPS.map((key, idx) => {
+          const isDone = idx < stepIndex;
+          const isCurrent = idx === stepIndex;
+          return (
+            <li key={key} className="relative flex flex-col items-center">
+              {idx > 0 && (
+                <div
+                  className={`absolute right-1/2 top-3.5 h-0.5 w-full -translate-y-1/2 transition-colors duration-300 ${
+                    isDone || isCurrent ? "bg-primary" : "bg-neutral/30"
+                  }`}
+                />
+              )}
+              <div
+                className={`relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-all duration-300 ${
+                  isDone
+                    ? "bg-primary text-white"
+                    : isCurrent
+                      ? "bg-primary text-white ring-4 ring-primary-tint"
+                      : "bg-neutral/30 text-text-secondary"
+                }`}
+              >
+                {isDone ? (
+                  <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+                    <path
+                      fillRule="evenodd"
+                      d="M16.704 5.29a1 1 0 010 1.42l-7.5 7.5a1 1 0 01-1.415 0l-3.5-3.5a1 1 0 111.415-1.42L8.5 12.085l6.79-6.795a1 1 0 011.414 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                ) : (
+                  idx + 1
+                )}
+              </div>
+              <span
+                className={`mt-1.5 hidden text-center text-[11px] leading-tight sm:block ${
+                  isCurrent ? "font-semibold text-foreground" : "text-text-secondary"
+                }`}
+              >
+                {STEP_TITLES[key]}
+              </span>
+            </li>
+          );
+        })}
       </ol>
 
       <h1 className="mb-6 text-xl font-bold">{STEP_TITLES[stepKey]}</h1>
@@ -62,7 +91,7 @@ export function Wizard() {
           type="button"
           onClick={back}
           disabled={stepIndex === 0}
-          className="rounded-lg px-4 py-2 text-sm font-medium text-text-secondary disabled:opacity-0"
+          className="rounded-lg px-4 py-2 text-sm font-medium text-text-secondary transition-all duration-150 hover:bg-neutral/20 active:scale-95 disabled:opacity-0"
         >
           이전
         </button>
@@ -70,7 +99,7 @@ export function Wizard() {
           <button
             type="button"
             onClick={next}
-            className="rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-white hover:bg-primary-hover"
+            className="rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-150 hover:bg-primary-hover hover:shadow active:scale-95 active:shadow-none"
           >
             다음
           </button>

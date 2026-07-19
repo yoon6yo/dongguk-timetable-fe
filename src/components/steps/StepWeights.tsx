@@ -6,8 +6,8 @@ import { useWeightsStore } from "@/store/weightsStore";
 
 const SLIDERS: { key: keyof Weights; label: string; low: string; high: string }[] = [
   { key: "gap", label: "공강 시간 최소화", low: "신경 안 씀", high: "매우 중요" },
-  { key: "lunch", label: "점심시간 확보 (12~13시)", low: "신경 안 씀", high: "매우 중요" },
-  { key: "freeDay", label: "공강일(요일) 확보", low: "신경 안 씀", high: "매우 중요" },
+  { key: "lunch", label: "점심시간 확보", low: "신경 안 씀", high: "매우 중요" },
+  { key: "freeDay", label: "공강일 확보", low: "신경 안 씀", high: "매우 중요" },
   { key: "timeOfDay", label: "오전 ↔ 오후 선호", low: "오전 선호", high: "오후 선호" },
 ];
 
@@ -45,9 +45,11 @@ export function StepWeights() {
 
       {SLIDERS.map(({ key, label, low, high }) => (
         <div key={key}>
-          <div className="mb-1 flex items-center justify-between text-sm">
+          <div className="mb-2 flex items-center justify-between text-sm">
             <span className="font-medium">{label}</span>
-            <span className="text-text-secondary">{weights[key]}</span>
+            <span className="sr-only" aria-live="polite">
+              {weights[key]}
+            </span>
           </div>
           <input
             type="range"
@@ -55,16 +57,20 @@ export function StepWeights() {
             max={100}
             value={weights[key]}
             onChange={(e) => setWeight(key, Number(e.target.value))}
-            className="w-full accent-primary"
+            className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-neutral/30 accent-primary transition-opacity hover:opacity-90"
           />
-          <div className="flex justify-between text-xs text-text-secondary">
+          <div className="mt-1 flex justify-between text-xs text-text-secondary">
             <span>{low}</span>
             <span>{high}</span>
           </div>
         </div>
       ))}
 
-      <button type="button" onClick={reset} className="text-sm text-text-secondary underline hover:text-primary">
+      <button
+        type="button"
+        onClick={reset}
+        className="rounded-md text-sm text-text-secondary underline decoration-neutral underline-offset-2 transition-colors hover:text-primary active:scale-[0.98]"
+      >
         기본값으로 되돌리기
       </button>
     </div>

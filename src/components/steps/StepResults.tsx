@@ -58,7 +58,7 @@ export function StepResults() {
         type="button"
         onClick={handleGenerate}
         disabled={running || groups.length === 0}
-        className="rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-white hover:bg-primary-hover disabled:bg-neutral/30 disabled:text-text-secondary"
+        className="rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-150 hover:bg-primary-hover hover:shadow active:scale-95 active:shadow-none disabled:scale-100 disabled:bg-neutral/30 disabled:text-text-secondary disabled:shadow-none"
       >
         {running ? "생성 중..." : "시간표 조합 생성하기"}
       </button>
@@ -80,8 +80,8 @@ export function StepResults() {
                 <button
                   type="button"
                   onClick={() => setSelectedIndex(idx)}
-                  className={`w-full rounded-lg border p-3 text-left text-sm ${
-                    selectedIndex === idx ? "border-primary bg-primary-tint" : "border-neutral"
+                  className={`w-full rounded-lg border p-3 text-left text-sm transition-all duration-150 active:scale-[0.99] ${
+                    selectedIndex === idx ? "border-primary bg-primary-tint" : "border-neutral hover:border-primary/50"
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -108,8 +108,8 @@ export function StepResults() {
                   <button
                     type="button"
                     onClick={() => setView("grid")}
-                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                      view === "grid" ? "bg-primary text-white" : "bg-neutral/30 text-text-secondary"
+                    className={`rounded-full px-3 py-1 text-xs font-semibold transition-all duration-150 active:scale-95 ${
+                      view === "grid" ? "bg-primary text-white" : "bg-neutral/30 text-text-secondary hover:bg-neutral/50"
                     }`}
                   >
                     그리드
@@ -117,8 +117,8 @@ export function StepResults() {
                   <button
                     type="button"
                     onClick={() => setView("table")}
-                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                      view === "table" ? "bg-primary text-white" : "bg-neutral/30 text-text-secondary"
+                    className={`rounded-full px-3 py-1 text-xs font-semibold transition-all duration-150 active:scale-95 ${
+                      view === "table" ? "bg-primary text-white" : "bg-neutral/30 text-text-secondary hover:bg-neutral/50"
                     }`}
                   >
                     표
@@ -127,7 +127,7 @@ export function StepResults() {
                 <button
                   type="button"
                   onClick={handleExport}
-                  className="rounded-lg border border-neutral px-3 py-1 text-xs font-semibold hover:border-primary hover:text-primary"
+                  className="rounded-lg border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
                 >
                   이미지로 저장
                 </button>

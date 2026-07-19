@@ -38,7 +38,7 @@ export function StepGroups() {
         <button
           type="button"
           onClick={handleAdd}
-          className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-hover"
+          className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all duration-150 hover:bg-primary-hover hover:shadow active:scale-95 active:shadow-none"
         >
           추가
         </button>
@@ -46,13 +46,16 @@ export function StepGroups() {
 
       <ul className="space-y-2">
         {groups.map((group) => (
-          <li key={group.id} className="flex items-center justify-between rounded-lg border border-neutral p-3">
+          <li
+            key={group.id}
+            className="flex items-center justify-between rounded-lg border border-neutral p-3 transition-colors hover:border-neutral/70"
+          >
             <div>
               <input
                 type="text"
                 value={group.name}
                 onChange={(e) => renameGroup(group.id, e.target.value)}
-                className="rounded border border-transparent bg-transparent font-medium outline-none hover:border-neutral focus:border-primary"
+                className="rounded border border-transparent bg-transparent font-medium outline-none transition-colors hover:border-neutral focus:border-primary"
               />
               <p className="text-xs text-text-secondary">{group.courseIds.length}개 과목 담김</p>
             </div>
@@ -60,8 +63,8 @@ export function StepGroups() {
               <button
                 type="button"
                 onClick={() => toggleRequired(group.id)}
-                className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                  group.required ? "bg-primary text-white" : "bg-neutral/30 text-text-secondary"
+                className={`rounded-full px-3 py-1 text-xs font-semibold transition-all duration-150 active:scale-95 ${
+                  group.required ? "bg-primary text-white" : "bg-neutral/30 text-text-secondary hover:bg-neutral/50"
                 }`}
               >
                 {group.required ? "필수" : "선택"}
@@ -70,7 +73,7 @@ export function StepGroups() {
                 type="button"
                 onClick={() => removeGroup(group.id)}
                 aria-label={`${group.name} 그룹 삭제`}
-                className="text-text-secondary hover:text-error"
+                className="rounded-md px-1 text-text-secondary transition-all duration-150 hover:text-error active:scale-95"
               >
                 삭제
               </button>
