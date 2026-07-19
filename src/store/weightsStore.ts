@@ -5,7 +5,7 @@ import type { Weights } from "@/lib/scoring";
 
 /** Neutral defaults: 50 for every slider (timeOfDay=50 means "no morning/afternoon
  * preference at all" — see scoring.ts's importance-from-distance-to-neutral design). */
-export const DEFAULT_WEIGHTS: Weights = { gap: 50, lunch: 50, freeDay: 50, timeOfDay: 50 };
+export const DEFAULT_WEIGHTS: Weights = { gap: 50, lunch: 50, freeDay: 50, timeOfDay: 50, commute: 50 };
 
 interface WeightsState {
   weights: Weights;

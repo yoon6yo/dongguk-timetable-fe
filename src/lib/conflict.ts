@@ -4,6 +4,10 @@ export interface TimeBlock {
   dayOfWeek: number;
   startMinutes: number;
   endMinutes: number;
+  /** Raw ROOM_KOR_DSC text, kept unparsed here — see buildingCoordinates.ts's
+   * extractBuildingName() for the one place that interprets it. Optional so
+   * every existing call site/test building a TimeBlock by hand still compiles. */
+  classroom?: string | null;
 }
 
 /** "HH:MM" or "HH:MM:SS" (mysql2 returns TIME columns as the latter) -> minutes since midnight. */
@@ -25,6 +29,7 @@ export function toTimeBlocks(schedules: ScheduleRow[]): TimeBlock[] {
       dayOfWeek: s.dayOfWeek,
       startMinutes: timeToMinutes(s.startTime),
       endMinutes: timeToMinutes(s.endTime),
+      classroom: s.classroom,
     });
   }
   return blocks;

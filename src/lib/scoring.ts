@@ -1,12 +1,13 @@
+import { classroomDistanceMeters } from "./buildingCoordinates";
 import type { TimeBlock } from "./conflict";
 
 /**
- * All four sliders are 0-100, user-adjusted directly (see project plan §5).
+ * All five sliders are 0-100, user-adjusted directly (see project plan §5).
  * `timeOfDay` does double duty: its value is both the *target* position
  * (0 = strong morning preference, 50 = neutral, 100 = strong afternoon
  * preference) and, via distance-from-neutral, its own *importance* in the
  * weighted total — leaving it at 50 means "I don't care", matching the
- * intuitive act of not touching the slider. The other three are plain
+ * intuitive act of not touching the slider. The other four are plain
  * 0-100 importance weights.
  */
 export interface Weights {
@@ -14,6 +15,7 @@ export interface Weights {
   lunch: number;
   freeDay: number;
   timeOfDay: number;
+  commute: number;
 }
 
 export interface ScoreBreakdown {
@@ -21,6 +23,7 @@ export interface ScoreBreakdown {
   lunch: number;
   freeDay: number;
   timeOfDay: number;
+  commute: number;
   total: number;
 }
 
@@ -28,6 +31,11 @@ const WEEKDAYS = [1, 2, 3, 4, 5] as const;
 const LUNCH_WINDOW = { start: 12 * 60, end: 13 * 60 }; // 12:00–13:00
 const GAP_REFERENCE_MINUTES = 600; // 10h/week of idle time treated as "as bad as it gets" (score floors at 0)
 const DAY_RANGE = { start: 9 * 60, end: 21 * 60 }; // 09:00–21:00, for normalizing "average start time"
+// Straight-line meters/week of building-to-building walking treated as "as
+// bad as it gets" (score floors at 0). Campus is compact (~500m across), so a
+// full week of back-to-back cross-campus transitions tops out well under
+// this — approximate on purpose, see buildingCoordinates.ts.
+const COMMUTE_REFERENCE_METERS = 3000;
 
 function groupByDay(blocks: TimeBlock[]): Map<number, TimeBlock[]> {
   const byDay = new Map<number, TimeBlock[]>();
@@ -83,22 +91,42 @@ export function computeTimeOfDayScore(blocks: TimeBlock[], target: number): numb
   return clamp(100 - Math.abs(position - target));
 }
 
+/** Sum of straight-line building-to-building distance between consecutive
+ * classes on the same day, across the week. Transitions where either class's
+ * building can't be resolved (unrecognized/missing classroom text) are
+ * skipped rather than penalized, since "unknown" isn't evidence of a long walk. */
+export function computeCommuteScore(blocks: TimeBlock[]): number {
+  let totalMeters = 0;
+  for (const dayBlocks of groupByDay(blocks).values()) {
+    for (let i = 1; i < dayBlocks.length; i++) {
+      const distance = classroomDistanceMeters(dayBlocks[i - 1].classroom, dayBlocks[i].classroom);
+      if (distance != null) totalMeters += distance;
+    }
+  }
+  return clamp(100 * (1 - totalMeters / COMMUTE_REFERENCE_METERS));
+}
+
 export function scoreCombination(blocks: TimeBlock[], weights: Weights): ScoreBreakdown {
   const gap = computeGapScore(blocks);
   const lunch = computeLunchScore(blocks);
   const freeDay = computeFreeDayScore(blocks);
   const timeOfDay = computeTimeOfDayScore(blocks, weights.timeOfDay);
+  const commute = computeCommuteScore(blocks);
 
   const timeOfDayImportance = Math.abs(weights.timeOfDay - 50) * 2;
-  const totalImportance = weights.gap + weights.lunch + weights.freeDay + timeOfDayImportance;
+  const totalImportance = weights.gap + weights.lunch + weights.freeDay + weights.commute + timeOfDayImportance;
 
   const total =
     totalImportance === 0
-      ? (gap + lunch + freeDay + timeOfDay) / 4 // nobody cares about anything -> plain average, not 0
-      : (gap * weights.gap + lunch * weights.lunch + freeDay * weights.freeDay + timeOfDay * timeOfDayImportance) /
+      ? (gap + lunch + freeDay + timeOfDay + commute) / 5 // nobody cares about anything -> plain average, not 0
+      : (gap * weights.gap +
+          lunch * weights.lunch +
+          freeDay * weights.freeDay +
+          commute * weights.commute +
+          timeOfDay * timeOfDayImportance) /
         totalImportance;
 
-  return { gap, lunch, freeDay, timeOfDay, total };
+  return { gap, lunch, freeDay, timeOfDay, commute, total };
 }
 
 function clamp(value: number, min = 0, max = 100): number {

@@ -8,6 +8,7 @@ const SLIDERS: { key: keyof Weights; label: string; low: string; high: string }[
   { key: "gap", label: "공강 시간 최소화", low: "신경 안 씀", high: "매우 중요" },
   { key: "lunch", label: "점심시간 확보", low: "신경 안 씀", high: "매우 중요" },
   { key: "freeDay", label: "공강일 확보", low: "신경 안 씀", high: "매우 중요" },
+  { key: "commute", label: "동선(이동 거리) 최소화", low: "신경 안 씀", high: "매우 중요" },
   { key: "timeOfDay", label: "오전 ↔ 오후 선호", low: "오전 선호", high: "오후 선호" },
 ];
 
