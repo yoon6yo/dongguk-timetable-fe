@@ -12,11 +12,17 @@ const SAMPLE_ENTRY = {
   etag: '"abc123"',
 };
 
+const BROWSER_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:152.0) Gecko/20100101 Firefox/152.0";
+
+function browserRequest(url: string, init: RequestInit = {}): Request {
+  return new Request(url, { ...init, headers: { "User-Agent": BROWSER_UA, ...init.headers } });
+}
+
 describe("GET /api/courses", () => {
   it("returns 200 with the data and an ETag header on a fresh request", async () => {
     mockGetLatestSemesterCacheEntry.mockResolvedValueOnce(SAMPLE_ENTRY);
 
-    const response = await GET(new Request("http://localhost/api/courses"));
+    const response = await GET(browserRequest("http://localhost/api/courses"));
 
     expect(response.status).toBe(200);
     expect(response.headers.get("ETag")).toBe('"abc123"');
@@ -28,7 +34,7 @@ describe("GET /api/courses", () => {
     mockGetLatestSemesterCacheEntry.mockResolvedValueOnce(SAMPLE_ENTRY);
 
     const response = await GET(
-      new Request("http://localhost/api/courses", { headers: { "If-None-Match": '"abc123"' } })
+      browserRequest("http://localhost/api/courses", { headers: { "If-None-Match": '"abc123"' } })
     );
 
     expect(response.status).toBe(304);
@@ -40,7 +46,7 @@ describe("GET /api/courses", () => {
     mockGetLatestSemesterCacheEntry.mockResolvedValueOnce(SAMPLE_ENTRY);
 
     const response = await GET(
-      new Request("http://localhost/api/courses", { headers: { "If-None-Match": '"stale-etag"' } })
+      browserRequest("http://localhost/api/courses", { headers: { "If-None-Match": '"stale-etag"' } })
     );
 
     expect(response.status).toBe(200);
@@ -52,7 +58,7 @@ describe("GET /api/courses", () => {
       etag: '"empty"',
     });
 
-    const response = await GET(new Request("http://localhost/api/courses"));
+    const response = await GET(browserRequest("http://localhost/api/courses"));
 
     expect(response.status).toBe(404);
   });
@@ -60,11 +66,29 @@ describe("GET /api/courses", () => {
   it("returns a clean 500 JSON error without leaking the raw error when the cache/DB call throws", async () => {
     mockGetLatestSemesterCacheEntry.mockRejectedValueOnce(new Error("connect ECONNREFUSED"));
 
-    const response = await GET(new Request("http://localhost/api/courses"));
+    const response = await GET(browserRequest("http://localhost/api/courses"));
 
     expect(response.status).toBe(500);
     const body = await response.json();
     expect(body.error).toBeTruthy();
     expect(JSON.stringify(body)).not.toContain("ECONNREFUSED");
+  });
+
+  it("returns 403 without touching the cache/DB when the User-Agent looks like a scraper", async () => {
+    mockGetLatestSemesterCacheEntry.mockClear();
+
+    const response = await GET(new Request("http://localhost/api/courses", { headers: { "User-Agent": "curl/8.4.0" } }));
+
+    expect(response.status).toBe(403);
+    expect(mockGetLatestSemesterCacheEntry).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 when the User-Agent header is missing entirely", async () => {
+    mockGetLatestSemesterCacheEntry.mockClear();
+
+    const response = await GET(new Request("http://localhost/api/courses"));
+
+    expect(response.status).toBe(403);
+    expect(mockGetLatestSemesterCacheEntry).not.toHaveBeenCalled();
   });
 });
