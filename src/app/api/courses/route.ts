@@ -1,4 +1,3 @@
-import { isLikelyBot } from "@/lib/botDetection";
 import { getLatestSemesterCacheEntry } from "@/lib/latestSemesterCache";
 
 /**
@@ -12,10 +11,6 @@ import { getLatestSemesterCacheEntry } from "@/lib/latestSemesterCache";
  * re-downloading the whole catalog every time.
  */
 export async function GET(request: Request) {
-  if (isLikelyBot(request)) {
-    return Response.json({ error: "요청을 처리할 수 없습니다" }, { status: 403 });
-  }
-
   try {
     const { data, etag } = await getLatestSemesterCacheEntry();
 

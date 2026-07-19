@@ -73,22 +73,4 @@ describe("GET /api/courses", () => {
     expect(body.error).toBeTruthy();
     expect(JSON.stringify(body)).not.toContain("ECONNREFUSED");
   });
-
-  it("returns 403 without touching the cache/DB when the User-Agent looks like a scraper", async () => {
-    mockGetLatestSemesterCacheEntry.mockClear();
-
-    const response = await GET(new Request("http://localhost/api/courses", { headers: { "User-Agent": "curl/8.4.0" } }));
-
-    expect(response.status).toBe(403);
-    expect(mockGetLatestSemesterCacheEntry).not.toHaveBeenCalled();
-  });
-
-  it("returns 403 when the User-Agent header is missing entirely", async () => {
-    mockGetLatestSemesterCacheEntry.mockClear();
-
-    const response = await GET(new Request("http://localhost/api/courses"));
-
-    expect(response.status).toBe(403);
-    expect(mockGetLatestSemesterCacheEntry).not.toHaveBeenCalled();
-  });
 });
