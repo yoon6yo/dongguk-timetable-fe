@@ -3,13 +3,13 @@
 import { useMemo, useState } from "react";
 
 import { getCompetitionRate } from "@/lib/competitionRate";
-import { describeCourseSchedule } from "@/lib/courseScheduleSummary";
+import { courseScheduleSegments, describeCourseSchedule } from "@/lib/courseScheduleSummary";
 import { listColleges, listDepartments, searchCourses } from "@/lib/courseSearch";
 import { computeCreditRangeWarning, type CreditRangeWarning } from "@/lib/creditRangeWarning";
 import type { CourseRow } from "@/lib/types";
 import { MAX_SCHOOL_CREDIT, MIN_SCHOOL_CREDIT, useCreditLimitStore } from "@/store/creditLimitStore";
 import { useCoursesStore } from "@/store/coursesStore";
-import { useGroupsStore, type CourseGroup } from "@/store/groupsStore";
+import { groupDisplayName, useGroupsStore, type CourseGroup } from "@/store/groupsStore";
 import { useWizardStore } from "@/store/wizardStore";
 
 import { Modal } from "../Modal";
@@ -47,8 +47,8 @@ export function StepGroups() {
       </button>
 
       <div className="space-y-3">
-        {groups.map((group) => (
-          <GroupCard key={group.id} group={group} courses={courses} courseById={courseById} />
+        {groups.map((group, index) => (
+          <GroupCard key={group.id} group={group} index={index} courses={courses} courseById={courseById} />
         ))}
         {groups.length === 0 && <p className="text-sm text-text-secondary">아직 만든 그룹이 없습니다.</p>}
       </div>
@@ -69,10 +69,12 @@ function CreditRangeWarningBanner({ warning }: { warning: CreditRangeWarning }) 
 
 function GroupCard({
   group,
+  index,
   courses,
   courseById,
 }: {
   group: CourseGroup;
+  index: number;
   courses: CourseRow[];
   courseById: Map<number, CourseRow>;
 }) {
@@ -82,6 +84,7 @@ function GroupCard({
   const removeCourseFromGroup = useGroupsStore((s) => s.removeCourseFromGroup);
 
   const [searchOpen, setSearchOpen] = useState(false);
+  const displayName = groupDisplayName(group, index);
 
   return (
     <div className="rounded-xl bg-surface p-3 shadow-card transition-shadow hover:shadow-card-hover">
@@ -90,7 +93,8 @@ function GroupCard({
           type="text"
           value={group.name}
           onChange={(e) => renameGroup(group.id, e.target.value)}
-          className="rounded border border-transparent bg-transparent font-medium outline-none transition-colors hover:border-neutral focus:border-primary"
+          placeholder={displayName}
+          className="rounded border border-transparent bg-transparent font-medium outline-none transition-colors hover:border-neutral focus:border-primary placeholder:font-normal placeholder:text-text-secondary"
         />
         <div className="flex items-center gap-3">
           <button
@@ -105,7 +109,7 @@ function GroupCard({
           <button
             type="button"
             onClick={() => removeGroup(group.id)}
-            aria-label={`${group.name} 그룹 삭제`}
+            aria-label={`${displayName} 그룹 삭제`}
             className="rounded-md px-1 text-text-secondary transition-all duration-150 hover:text-error active:scale-95"
           >
             삭제
@@ -114,36 +118,56 @@ function GroupCard({
       </div>
 
       {group.courseIds.length > 0 && (
-        <ul className="mt-2 space-y-1.5">
-          {group.courseIds.map((id) => {
-            const course = courseById.get(id);
-            if (!course) return null;
-            return (
-              <li
-                key={id}
-                className="flex items-center justify-between gap-2 rounded-lg bg-primary-tint px-3 py-1.5 text-xs"
-              >
-                <div>
-                  <p className="font-medium">
-                    {course.courseName}
-                    <span className="ml-1 font-normal text-text-secondary">
+        <div className="mt-2 overflow-x-auto rounded-lg bg-primary-tint">
+          <table className="w-full text-left text-xs">
+            <thead>
+              <tr className="text-text-secondary">
+                <th className="p-2 font-medium">과목명</th>
+                <th className="p-2 font-medium">학수번호</th>
+                <th className="p-2 font-medium">시간</th>
+                <th className="p-2 font-medium">강의실</th>
+                <th className="p-2 font-medium">경쟁률</th>
+                <th className="p-2" />
+              </tr>
+            </thead>
+            <tbody>
+              {group.courseIds.map((id) => {
+                const course = courseById.get(id);
+                if (!course) return null;
+                const segments = courseScheduleSegments(course);
+                const competitionRate = getCompetitionRate(course);
+                return (
+                  <tr key={id} className="border-t border-background/60">
+                    <td className="p-2 font-medium">{course.courseName}</td>
+                    <td className="p-2 text-text-secondary">
                       {course.courseNo}-{course.classNo}
-                    </span>
-                  </p>
-                  <p className="text-text-secondary">{describeCourseSchedule(course)}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => removeCourseFromGroup(group.id, id)}
-                  aria-label={`${course.courseName} 제거`}
-                  className="shrink-0 text-text-secondary hover:text-error"
-                >
-                  ×
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+                    </td>
+                    <td className="p-2 text-text-secondary">
+                      {segments.length > 0 ? segments.map((s) => s.timeLabel).join(" / ") : "시간 미정"}
+                    </td>
+                    <td className="p-2 text-text-secondary">
+                      {segments.length > 0 ? segments.map((s) => s.classroom ?? "-").join(" / ") : "-"}
+                    </td>
+                    <td className="p-2 text-text-secondary">
+                      {competitionRate.rate.toFixed(2)}
+                      {competitionRate.isMock && <span className="text-neutral"> ·추정</span>}
+                    </td>
+                    <td className="p-2">
+                      <button
+                        type="button"
+                        onClick={() => removeCourseFromGroup(group.id, id)}
+                        aria-label={`${course.courseName} 제거`}
+                        className="text-text-secondary hover:text-error"
+                      >
+                        ×
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       )}
 
       <button
@@ -155,7 +179,12 @@ function GroupCard({
       </button>
 
       {searchOpen && (
-        <AddCourseModal group={group} courses={courses} onClose={() => setSearchOpen(false)} />
+        <AddCourseModal
+          group={group}
+          displayName={displayName}
+          courses={courses}
+          onClose={() => setSearchOpen(false)}
+        />
       )}
     </div>
   );
@@ -163,10 +192,12 @@ function GroupCard({
 
 function AddCourseModal({
   group,
+  displayName,
   courses,
   onClose,
 }: {
   group: CourseGroup;
+  displayName: string;
   courses: CourseRow[];
   onClose: () => void;
 }) {
@@ -184,7 +215,7 @@ function AddCourseModal({
   const results = allResults.slice(0, SEARCH_RESULT_LIMIT);
 
   return (
-    <Modal title={`"${group.name}"에 과목 추가`} onClose={onClose}>
+    <Modal title={`"${displayName}"에 과목 추가`} onClose={onClose}>
       <div className="space-y-2">
         <div className="grid grid-cols-2 gap-2">
           <select

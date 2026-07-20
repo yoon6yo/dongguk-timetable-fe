@@ -17,6 +17,11 @@ import { useWizardStore } from "@/store/wizardStore";
 import { TimetableGrid } from "../TimetableGrid";
 import { TimetableTable } from "../TimetableTable";
 
+// Rendering a full mini-grid for all (up to 200) combinations would be a real
+// perf hit -- cap the visual preview to the top-scored N (already sorted) and
+// fall back to a plain text row beyond that. Still clickable either way.
+const GRID_PREVIEW_LIMIT = 12;
+
 export function StepResults() {
   const groups = useGroupsStore((s) => s.groups);
   const courses = useCoursesStore((s) => s.courses);
@@ -96,31 +101,40 @@ export function StepResults() {
             </p>
           )}
 
-          <ul className="space-y-2">
-            {result.combinations.map((combo, idx) => (
-              <li key={idx}>
-                <button
-                  type="button"
-                  onClick={() => setSelectedIndex(idx)}
-                  className={`w-full rounded-xl p-3 text-left text-sm shadow-card transition-all duration-150 hover:shadow-card-hover active:scale-[0.99] ${
-                    selectedIndex === idx ? "bg-primary-tint ring-2 ring-primary" : "bg-surface"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold">#{idx + 1}</span>
-                    <span className="text-text-secondary">
-                      {combo.totalCredit}학점 · 점수 {Math.round(combo.score.total)}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-text-secondary">
-                    {combo.courseIds
-                      .map((id) => courseById.get(id)?.courseName)
-                      .filter(Boolean)
-                      .join(", ") || "(선택 없음)"}
-                  </p>
-                </button>
-              </li>
-            ))}
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {result.combinations.map((combo, idx) => {
+              const comboCourses = combo.courseIds
+                .map((id) => courseById.get(id))
+                .filter((c): c is CourseRow => Boolean(c));
+              const isSelected = selectedIndex === idx;
+              return (
+                <li key={idx} className={idx >= GRID_PREVIEW_LIMIT ? "sm:col-span-2" : undefined}>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedIndex(idx)}
+                    className={`w-full rounded-xl p-3 text-left text-sm shadow-card transition-all duration-150 hover:shadow-card-hover active:scale-[0.99] ${
+                      isSelected ? "bg-primary-tint ring-2 ring-primary" : "bg-surface"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold">#{idx + 1}</span>
+                      <span className="text-text-secondary">
+                        {combo.totalCredit}학점 · 점수 {Math.round(combo.score.total)}
+                      </span>
+                    </div>
+                    {idx < GRID_PREVIEW_LIMIT ? (
+                      <div className="mt-2">
+                        <TimetableGrid courses={comboCourses} compact />
+                      </div>
+                    ) : (
+                      <p className="mt-1 text-text-secondary">
+                        {comboCourses.map((c) => c.courseName).join(", ") || "(선택 없음)"}
+                      </p>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
           </ul>
 
           {selected && (
