@@ -22,6 +22,7 @@ function makeCourse(overrides: Partial<CourseRow> = {}): CourseRow {
     targetGrade: "1학년",
     capacity: 0,
     enrolled: 0,
+    appliedCount: null,
     gradeType: "해당없음",
     evalMethod: "해당없음",
     lectureRegion: "서울",

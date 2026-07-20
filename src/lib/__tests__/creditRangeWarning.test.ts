@@ -29,6 +29,7 @@ function course(id: number, credit: string): [number, CourseRow] {
       targetGrade: null,
       capacity: null,
       enrolled: null,
+      appliedCount: null,
       gradeType: null,
       evalMethod: null,
       lectureRegion: null,

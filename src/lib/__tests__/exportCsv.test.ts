@@ -22,6 +22,7 @@ function makeCourse(overrides: Partial<CourseRow> = {}): CourseRow {
     targetGrade: null,
     capacity: null,
     enrolled: null,
+    appliedCount: null,
     gradeType: null,
     evalMethod: null,
     lectureRegion: null,

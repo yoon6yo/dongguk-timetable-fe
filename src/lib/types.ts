@@ -33,6 +33,7 @@ export interface CourseRow {
   targetGrade: string | null;
   capacity: number | null;
   enrolled: number | null;
+  appliedCount: number | null;
   gradeType: string | null;
   evalMethod: string | null;
   lectureRegion: string | null;

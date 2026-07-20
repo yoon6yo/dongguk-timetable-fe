@@ -17,7 +17,7 @@ export async function getCoursesForSemester(db: Queryable, semesterId: number): 
        course_name_en AS courseNameEn, professor, college, department, major,
        credit, course_type AS courseType, detail_curriculum AS detailCurriculum,
        lecture_style AS lectureStyle, lecture_type AS lectureType, target_grade AS targetGrade,
-       capacity, enrolled, grade_type AS gradeType, eval_method AS evalMethod,
+       capacity, enrolled, applied_count AS appliedCount, grade_type AS gradeType, eval_method AS evalMethod,
        lecture_region AS lectureRegion, remarks
      FROM courses
      WHERE semester_id = ?

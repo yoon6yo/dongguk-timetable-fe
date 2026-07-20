@@ -1,17 +1,20 @@
 /**
- * `capacity` (TKCRS_PCNT) looks reliable now that real 수강신청-period data
- * has come in — plausible class sizes (1-30ish), including tiny 1-3 seat
- * 개별연구 sections.
+ * `capacity` (TKCRS_PCNT from BE's EdcLesn010 crawl) looks reliable now that
+ * real 수강신청-period data has come in — plausible class sizes (1-30ish),
+ * including tiny 1-3 seat 개별연구 sections.
  *
- * `enrolled` (SESN_SEM_TKCRS_AMT), however, does NOT look like an enrollment
- * headcount in the real data: values are large round multiples of 30000
- * (e.g. 270000, 210000, 420000) with no relation to capacity — "AMT" in the
- * raw field name means "amount" (probably a fee), not a person count. Using
- * it as-is would show nonsensical "경쟁률" numbers as if they were real. So
- * this ALWAYS mocks both capacity and enrolled for now, regardless of what
- * BE sends, until BE re-maps `enrolled` to a real headcount field (see BE
- * STATUS.md / docs/ndrims-response-notes.md) — flip the condition below back
- * on once that's confirmed fixed.
+ * `enrolled` (SESN_SEM_TKCRS_AMT) does NOT look like an enrollment headcount:
+ * values are large round multiples of 30000 (e.g. 270000, 210000, 420000)
+ * with no relation to capacity — "AMT" in the raw field name means "amount"
+ * (probably a fee), not a person count. This field is never used here.
+ *
+ * `appliedCount` (BE's `applied_count`, sourced from a *different* nDRIMS
+ * screen — EdcRegi105's 희망강의신청, not EdcLesn010) is the real live
+ * headcount: real HAR evidence showed it exceeding capacity for popular
+ * electives (up to ~2x), which only makes sense for a demand count, never a
+ * capacity. See BE's docs/ndrims-response-notes.md for the full writeup.
+ * That screen isn't open year-round, so `appliedCount` is null whenever the
+ * last successful crawl couldn't reach it — always mock in that case.
  */
 export interface CompetitionRate {
   capacity: number;
@@ -30,16 +33,24 @@ function seededFraction(seed: number): number {
   return x - Math.floor(x);
 }
 
-const ENROLLED_FIELD_TRUSTED = false;
+// Kill switch kept for parity with how the old (wrong) `enrolled` field was
+// gated — flip to false to force mocks everywhere without touching the
+// branch logic below, if `appliedCount` ever looks wrong in production.
+const APPLIED_COUNT_TRUSTED = true;
 
 export function getCompetitionRate(course: {
   id: number;
   capacity: number | null;
-  enrolled: number | null;
+  appliedCount: number | null;
 }): CompetitionRate {
-  if (ENROLLED_FIELD_TRUSTED && course.capacity != null && course.capacity > 0) {
+  if (
+    APPLIED_COUNT_TRUSTED &&
+    course.capacity != null &&
+    course.capacity > 0 &&
+    course.appliedCount != null
+  ) {
     const capacity = course.capacity;
-    const enrolled = course.enrolled ?? 0;
+    const enrolled = course.appliedCount;
     return { capacity, enrolled, ratePercent: Math.round((enrolled / capacity) * 100), isMock: false };
   }
 
