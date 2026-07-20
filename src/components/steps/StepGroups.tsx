@@ -206,6 +206,7 @@ function GroupCard({
                       경쟁률 {competitionRate.enrolled}/{competitionRate.capacity}명 ({competitionRate.ratePercent}%)
                       {competitionRate.isMock && <span className="ml-1 text-neutral">· 추정</span>}
                     </p>
+                    {course.remarks && <p className="mt-0.5 text-[11px] text-neutral">{course.remarks}</p>}
                   </div>
                   <button
                     type="button"
