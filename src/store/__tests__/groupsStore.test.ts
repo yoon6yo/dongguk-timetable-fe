@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { useGroupsStore } from "../groupsStore";
+import { groupDisplayName, useGroupsStore } from "../groupsStore";
 
 beforeEach(() => {
   useGroupsStore.setState({ groups: [] });
@@ -17,23 +17,16 @@ describe("useGroupsStore", () => {
     expect(groups[0].id).toBeTruthy();
   });
 
-  it("auto-generates a name when none is given", () => {
+  it("stores an empty name when none is given -- naming is left to the UI placeholder", () => {
     useGroupsStore.getState().addGroup();
 
-    expect(useGroupsStore.getState().groups[0].name).toBe("그룹 1");
+    expect(useGroupsStore.getState().groups[0].name).toBe("");
   });
 
-  it("auto-generates a name when given an empty/whitespace-only string", () => {
+  it("stores an empty name when given an empty/whitespace-only string", () => {
     useGroupsStore.getState().addGroup("   ");
 
-    expect(useGroupsStore.getState().groups[0].name).toBe("그룹 1");
-  });
-
-  it("auto-generated names count existing groups, not just auto-named ones", () => {
-    useGroupsStore.getState().addGroup("전공 필수");
-    useGroupsStore.getState().addGroup();
-
-    expect(useGroupsStore.getState().groups[1].name).toBe("그룹 2");
+    expect(useGroupsStore.getState().groups[0].name).toBe("");
   });
 
   it("assigns distinct ids to different groups", () => {
@@ -106,5 +99,23 @@ describe("useGroupsStore", () => {
     useGroupsStore.getState().addCourseToGroup(idA, 101);
 
     expect(useGroupsStore.getState().groups.find((g) => g.id === idB)?.courseIds).toEqual([]);
+  });
+});
+
+describe("groupDisplayName", () => {
+  it("returns the trimmed name when one is set", () => {
+    const group = { id: "g1", name: "전공 필수", required: true, courseIds: [] };
+    expect(groupDisplayName(group, 0)).toBe("전공 필수");
+  });
+
+  it("falls back to '그룹 N' (1-indexed) when the name is empty", () => {
+    const group = { id: "g1", name: "", required: true, courseIds: [] };
+    expect(groupDisplayName(group, 0)).toBe("그룹 1");
+    expect(groupDisplayName(group, 3)).toBe("그룹 4");
+  });
+
+  it("falls back when the name is whitespace-only", () => {
+    const group = { id: "g1", name: "   ", required: true, courseIds: [] };
+    expect(groupDisplayName(group, 1)).toBe("그룹 2");
   });
 });

@@ -9,11 +9,19 @@ export interface CourseGroup {
   courseIds: number[];
 }
 
+/** Falls back to "그룹 N" (1-indexed by creation order) for *display* only —
+ * a freshly created group's stored name stays empty, so the UI can show this
+ * as a placeholder (grayed-out hint text) instead of baking it into the real
+ * value, which read like an unfinished default the user forgot to edit. */
+export function groupDisplayName(group: CourseGroup, index: number): string {
+  return group.name.trim() || `그룹 ${index + 1}`;
+}
+
 interface GroupsState {
   groups: CourseGroup[];
   /** name is optional — naming a group is a nice-to-have, not a required
-   * step, so an omitted/blank name falls back to "그룹 N" rather than
-   * blocking group creation on typing something first. */
+   * step. An omitted/blank name stays blank (see groupDisplayName for how
+   * it's shown), rather than committing a "그룹 N" placeholder as real data. */
   addGroup: (name?: string) => void;
   removeGroup: (id: string) => void;
   renameGroup: (id: string, name: string) => void;
@@ -34,13 +42,12 @@ export const useGroupsStore = create<GroupsState>()(
       groups: [],
 
       addGroup: (name) =>
-        set((state) => {
-          const trimmed = name?.trim();
-          const finalName = trimmed && trimmed.length > 0 ? trimmed : `그룹 ${state.groups.length + 1}`;
-          return {
-            groups: [...state.groups, { id: makeGroupId(), name: finalName, required: true, courseIds: [] }],
-          };
-        }),
+        set((state) => ({
+          groups: [
+            ...state.groups,
+            { id: makeGroupId(), name: name?.trim() ?? "", required: true, courseIds: [] },
+          ],
+        })),
 
       removeGroup: (id) => set((state) => ({ groups: state.groups.filter((g) => g.id !== id) })),
 

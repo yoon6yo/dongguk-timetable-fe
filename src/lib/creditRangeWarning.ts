@@ -1,4 +1,4 @@
-import type { CourseGroup } from "@/store/groupsStore";
+import { groupDisplayName, type CourseGroup } from "@/store/groupsStore";
 
 import type { CourseRow } from "./types";
 
@@ -40,7 +40,7 @@ export function computeCreditRangeWarning(
 
   const emptyGroup = requiredGroups.find((g) => g.courseIds.length === 0);
   if (emptyGroup) {
-    return { type: "empty-required", groupName: emptyGroup.name };
+    return { type: "empty-required", groupName: groupDisplayName(emptyGroup, groups.indexOf(emptyGroup)) };
   }
 
   let sumMin = 0;
