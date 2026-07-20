@@ -5,12 +5,14 @@ import { useMemo, useRef, useState } from "react";
 import { buildGenerationInput } from "@/lib/buildGenerationInput";
 import { exportTimetableAsCsv } from "@/lib/exportCsv";
 import { exportElementAsPng } from "@/lib/exportImage";
+import { exportTimetableAsTxt } from "@/lib/exportTxt";
 import type { CourseRow } from "@/lib/types";
 import { useCombinationWorker } from "@/hooks/useCombinationWorker";
 import { useCoursesStore } from "@/store/coursesStore";
 import { MAX_SCHOOL_CREDIT, MIN_SCHOOL_CREDIT, useCreditLimitStore } from "@/store/creditLimitStore";
 import { useGroupsStore } from "@/store/groupsStore";
 import { useWeightsStore } from "@/store/weightsStore";
+import { useWizardStore } from "@/store/wizardStore";
 
 import { TimetableGrid } from "../TimetableGrid";
 import { TimetableTable } from "../TimetableTable";
@@ -23,12 +25,14 @@ export function StepResults() {
   const { running, result, error, run } = useCombinationWorker();
 
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-  const [view, setView] = useState<"grid" | "table">("grid");
   const exportRef = useRef<HTMLDivElement>(null);
 
   const courseById = useMemo(() => new Map(courses.map((c) => [String(c.id), c])), [courses]);
 
+  const markGenerateAttempted = useWizardStore((s) => s.markGenerateAttempted);
+
   function handleGenerate() {
+    markGenerateAttempted();
     const { groups: generatorGroups } = buildGenerationInput(groups, courses);
     run({
       groups: generatorGroups,
@@ -48,6 +52,11 @@ export function StepResults() {
   function handleExportCsv() {
     if (selectedCourses.length === 0) return;
     exportTimetableAsCsv(selectedCourses, "timetable.csv");
+  }
+
+  function handleExportTxt() {
+    if (selectedCourses.length === 0) return;
+    exportTimetableAsTxt(selectedCourses, "timetable.txt");
   }
 
   const selected = selectedIndex != null ? result?.combinations[selectedIndex] : undefined;
@@ -99,7 +108,9 @@ export function StepResults() {
                 >
                   <div className="flex items-center justify-between">
                     <span className="font-semibold">#{idx + 1}</span>
-                    <span className="text-text-secondary">{combo.totalCredit}학점</span>
+                    <span className="text-text-secondary">
+                      {combo.totalCredit}학점 · 점수 {Math.round(combo.score.total)}
+                    </span>
                   </div>
                   <p className="mt-1 text-text-secondary">
                     {combo.courseIds
@@ -114,27 +125,10 @@ export function StepResults() {
 
           {selected && (
             <div className="space-y-3 rounded-xl bg-surface p-3 shadow-card">
-              <div className="flex items-center justify-between">
-                <div className="flex gap-2 rounded-full bg-neutral/20 p-1">
-                  <button
-                    type="button"
-                    onClick={() => setView("grid")}
-                    className={`rounded-full px-3 py-1 text-xs font-semibold transition-all duration-150 active:scale-95 ${
-                      view === "grid" ? "bg-primary text-white shadow-sm" : "text-text-secondary hover:bg-neutral/30"
-                    }`}
-                  >
-                    그리드
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setView("table")}
-                    className={`rounded-full px-3 py-1 text-xs font-semibold transition-all duration-150 active:scale-95 ${
-                      view === "table" ? "bg-primary text-white shadow-sm" : "text-text-secondary hover:bg-neutral/30"
-                    }`}
-                  >
-                    표
-                  </button>
-                </div>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-medium">
+                  {selectedCourses.length}과목 · {selected.totalCredit}학점
+                </p>
                 <div className="flex gap-2">
                   <button
                     type="button"
@@ -150,11 +144,19 @@ export function StepResults() {
                   >
                     CSV로 저장
                   </button>
+                  <button
+                    type="button"
+                    onClick={handleExportTxt}
+                    className="rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
+                  >
+                    텍스트로 저장
+                  </button>
                 </div>
               </div>
 
-              <div ref={exportRef} className="bg-background p-2">
-                {view === "grid" ? <TimetableGrid courses={selectedCourses} /> : <TimetableTable courses={selectedCourses} />}
+              <div ref={exportRef} className="grid gap-3 bg-background p-2 lg:grid-cols-2">
+                <TimetableGrid courses={selectedCourses} />
+                <TimetableTable courses={selectedCourses} />
               </div>
             </div>
           )}
