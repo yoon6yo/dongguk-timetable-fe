@@ -19,7 +19,8 @@
 export interface CompetitionRate {
   capacity: number;
   enrolled: number;
-  ratePercent: number;
+  /** enrolled/capacity as a plain ratio (e.g. 0.78), not a percentage. */
+  rate: number;
   /** True when capacity/enrolled are a placeholder, not real crawled data. */
   isMock: boolean;
 }
@@ -51,10 +52,15 @@ export function getCompetitionRate(course: {
   ) {
     const capacity = course.capacity;
     const enrolled = course.appliedCount;
-    return { capacity, enrolled, ratePercent: Math.round((enrolled / capacity) * 100), isMock: false };
+    return { capacity, enrolled, rate: roundRate(enrolled / capacity), isMock: false };
   }
 
   const capacity = 20 + Math.floor(seededFraction(course.id) * 40); // 20..59
   const enrolled = Math.round(capacity * (0.2 + seededFraction(course.id + 1) * 1.3)); // ~20%..150% of capacity
-  return { capacity, enrolled, ratePercent: Math.round((enrolled / capacity) * 100), isMock: true };
+  return { capacity, enrolled, rate: roundRate(enrolled / capacity), isMock: true };
+}
+
+/** Two decimal places, e.g. 0.782 -> 0.78 -- matches the "0.78" style display. */
+function roundRate(rate: number): number {
+  return Math.round(rate * 100) / 100;
 }

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { useWizardStore, WIZARD_STEPS } from "../wizardStore";
 
 beforeEach(() => {
-  useWizardStore.setState({ stepIndex: 0 });
+  useWizardStore.setState({ stepIndex: 0, hasAttemptedGenerate: false });
 });
 
 describe("useWizardStore", () => {
@@ -39,5 +39,13 @@ describe("useWizardStore", () => {
 
     useWizardStore.getState().setStep(-5);
     expect(useWizardStore.getState().stepIndex).toBe(0);
+  });
+
+  it("hasAttemptedGenerate starts false and flips true once and stays true", () => {
+    expect(useWizardStore.getState().hasAttemptedGenerate).toBe(false);
+    useWizardStore.getState().markGenerateAttempted();
+    expect(useWizardStore.getState().hasAttemptedGenerate).toBe(true);
+    useWizardStore.getState().markGenerateAttempted();
+    expect(useWizardStore.getState().hasAttemptedGenerate).toBe(true);
   });
 });

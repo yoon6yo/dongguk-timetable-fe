@@ -9,7 +9,7 @@ describe("getCompetitionRate", () => {
   // open year-round, so a null appliedCount always falls back to the mock.
   it("uses real data when capacity and appliedCount are both present", () => {
     const result = getCompetitionRate({ id: 1, capacity: 30, appliedCount: 15 });
-    expect(result).toEqual({ capacity: 30, enrolled: 15, ratePercent: 50, isMock: false });
+    expect(result).toEqual({ capacity: 30, enrolled: 15, rate: 0.5, isMock: false });
   });
 
   it("falls back to a mock when appliedCount is null (희망강의신청 screen closed)", () => {
@@ -33,7 +33,7 @@ describe("getCompetitionRate", () => {
       expect(result.capacity).toBeGreaterThanOrEqual(20);
       expect(result.capacity).toBeLessThan(60);
       expect(result.enrolled).toBeGreaterThanOrEqual(0);
-      expect(result.ratePercent).toBe(Math.round((result.enrolled / result.capacity) * 100));
+      expect(result.rate).toBe(Math.round((result.enrolled / result.capacity) * 100) / 100);
     }
   });
 
@@ -45,13 +45,18 @@ describe("getCompetitionRate", () => {
 
   it("varies across different course ids (not a constant placeholder)", () => {
     const rates = new Set(
-      Array.from({ length: 20 }, (_, id) => getCompetitionRate({ id, capacity: 0, appliedCount: null }).ratePercent)
+      Array.from({ length: 20 }, (_, id) => getCompetitionRate({ id, capacity: 0, appliedCount: null }).rate)
     );
     expect(rates.size).toBeGreaterThan(1);
   });
 
   it("real appliedCount of 0 is trusted as-is, not treated as missing", () => {
     const result = getCompetitionRate({ id: 1, capacity: 30, appliedCount: 0 });
-    expect(result).toEqual({ capacity: 30, enrolled: 0, ratePercent: 0, isMock: false });
+    expect(result).toEqual({ capacity: 30, enrolled: 0, rate: 0, isMock: false });
+  });
+
+  it("rounds the rate to two decimal places", () => {
+    const result = getCompetitionRate({ id: 1, capacity: 3, appliedCount: 1 });
+    expect(result.rate).toBe(0.33);
   });
 });
