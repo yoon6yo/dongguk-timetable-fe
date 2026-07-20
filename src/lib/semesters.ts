@@ -9,7 +9,8 @@ import type { SemesterRow } from "./types";
  */
 export async function getLatestSemester(db: Queryable): Promise<SemesterRow | null> {
   const [rows] = await db.query<SemesterRow>(
-    `SELECT id, year, semester_code AS semesterCode, label
+    `SELECT id, year, semester_code AS semesterCode, label,
+            courses_synced_at AS coursesSyncedAt, applied_count_synced_at AS appliedCountSyncedAt
      FROM semesters
      WHERE is_latest = TRUE
      LIMIT 1`

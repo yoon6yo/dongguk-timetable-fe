@@ -3,6 +3,10 @@ export interface SemesterRow {
   year: number;
   semesterCode: string;
   label: string;
+  /** ISO datetime string (or null if never synced) — see loader.py's
+   * _touch_semester_sync. */
+  coursesSyncedAt: string | null;
+  appliedCountSyncedAt: string | null;
 }
 
 export interface ScheduleRow {
@@ -20,23 +24,12 @@ export interface CourseRow {
   courseNo: string;
   classNo: string;
   courseName: string;
-  courseNameEn: string | null;
   professor: string | null;
   college: string;
   department: string | null;
-  major: string | null;
   credit: string;
-  courseType: string;
-  detailCurriculum: string | null;
-  lectureStyle: string | null;
-  lectureType: string | null;
-  targetGrade: string | null;
   capacity: number | null;
-  enrolled: number | null;
   appliedCount: number | null;
-  gradeType: string | null;
-  evalMethod: string | null;
-  lectureRegion: string | null;
   remarks: string | null;
   schedules: ScheduleRow[];
 }

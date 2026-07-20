@@ -1,5 +1,7 @@
 "use client";
 
+import { formatSyncTime } from "@/lib/formatSyncTime";
+import { useCoursesStore } from "@/store/coursesStore";
 import { useWizardStore, WIZARD_STEPS } from "@/store/wizardStore";
 
 import { StepGroups } from "./steps/StepGroups";
@@ -25,6 +27,8 @@ export function Wizard() {
   const stepIndex = useWizardStore((s) => s.stepIndex);
   const next = useWizardStore((s) => s.next);
   const back = useWizardStore((s) => s.back);
+
+  const semester = useCoursesStore((s) => s.semester);
 
   const stepKey = WIZARD_STEPS[stepIndex];
   const StepComponent = STEP_COMPONENTS[stepKey];
@@ -77,7 +81,14 @@ export function Wizard() {
         })}
       </ol>
 
-      <h1 className="mb-6 text-xl font-bold">{STEP_TITLES[stepKey]}</h1>
+      <h1 className="text-xl font-bold">{STEP_TITLES[stepKey]}</h1>
+      {semester && (
+        <p className="mb-6 mt-1 text-xs text-text-secondary">
+          시간표 정보 {formatSyncTime(semester.coursesSyncedAt)} 기준 · 경쟁률{" "}
+          {formatSyncTime(semester.appliedCountSyncedAt)} 기준
+        </p>
+      )}
+      {!semester && <div className="mb-6" />}
 
       <div className="flex-1">
         <StepComponent />

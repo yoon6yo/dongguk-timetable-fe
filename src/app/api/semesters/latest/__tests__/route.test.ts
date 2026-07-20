@@ -7,7 +7,14 @@ vi.mock("@/lib/latestSemesterCache", () => ({
 
 const { GET } = await import("../route");
 
-const SEMESTER = { id: 1, year: 2026, semesterCode: "CM160.20", label: "2026학년도 2학기" };
+const SEMESTER = {
+  id: 1,
+  year: 2026,
+  semesterCode: "CM160.20",
+  label: "2026학년도 2학기",
+  coursesSyncedAt: "2026-07-20T05:00:00.000Z",
+  appliedCountSyncedAt: "2026-07-20T04:00:00.000Z",
+};
 const BROWSER_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:152.0) Gecko/20100101 Firefox/152.0";
 
 function browserRequest(url: string, init: RequestInit = {}): Request {

@@ -8,13 +8,29 @@ describe("getLatestSemester", () => {
     const db = new FakeQueryable([
       {
         match: "FROM semesters",
-        rows: [{ id: 1, year: 2026, semesterCode: "CM160.20", label: "2026학년도 2학기" }],
+        rows: [
+          {
+            id: 1,
+            year: 2026,
+            semesterCode: "CM160.20",
+            label: "2026학년도 2학기",
+            coursesSyncedAt: "2026-07-20T05:00:00.000Z",
+            appliedCountSyncedAt: "2026-07-20T04:00:00.000Z",
+          },
+        ],
       },
     ]);
 
     const result = await getLatestSemester(db);
 
-    expect(result).toEqual({ id: 1, year: 2026, semesterCode: "CM160.20", label: "2026학년도 2학기" });
+    expect(result).toEqual({
+      id: 1,
+      year: 2026,
+      semesterCode: "CM160.20",
+      label: "2026학년도 2학기",
+      coursesSyncedAt: "2026-07-20T05:00:00.000Z",
+      appliedCountSyncedAt: "2026-07-20T04:00:00.000Z",
+    });
   });
 
   it("returns null when no semester is marked latest", async () => {
