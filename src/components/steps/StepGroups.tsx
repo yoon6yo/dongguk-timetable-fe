@@ -4,6 +4,7 @@ import { DndContext, DragOverlay, KeyboardSensor, PointerSensor, useDraggable, u
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 
 import { listColleges, listCourseTypes, listDepartments, searchCourses, type CourseSortOption } from "@/lib/courseSearch";
+import { courseScheduleSegments } from "@/lib/courseScheduleSummary";
 import { DAY_LABELS } from "@/lib/timeGrid";
 import type { CourseRow } from "@/lib/types";
 import { useCoursesStore } from "@/store/coursesStore";
@@ -84,11 +85,7 @@ export function StepGroups() {
           {groups.length === 0 && <p className="text-sm text-text-secondary">아직 만든 그룹이 없습니다.</p>}
         </div>
         <DragOverlay dropAnimation={null}>
-          {activeCourse && (
-            <div className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white shadow-card-hover">
-              {activeCourse.courseName}
-            </div>
-          )}
+          {activeCourse && <DraggedRowPreview course={activeCourse} />}
         </DragOverlay>
       </DndContext>
 
@@ -272,18 +269,18 @@ function GroupCard({
         <div className="mt-2 bg-primary-tint">
           <CourseTable
             courses={group.courseIds.map((id) => courseById.get(id)).filter((c): c is CourseRow => Boolean(c))}
+            renderLeading={(course) => (
+              <DragHandle groupId={group.id} courseId={course.id} courseName={course.courseName} />
+            )}
             renderAction={(course) => (
-              <div className="flex items-center gap-1">
-                <DragHandle groupId={group.id} courseId={course.id} courseName={course.courseName} />
-                <button
-                  type="button"
-                  onClick={() => removeCourseFromGroup(group.id, course.id)}
-                  aria-label={`${course.courseName} 제거`}
-                  className="text-text-secondary hover:text-error"
-                >
-                  ×
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => removeCourseFromGroup(group.id, course.id)}
+                aria-label={`${course.courseName} 제거`}
+                className="text-text-secondary hover:text-error"
+              >
+                ×
+              </button>
             )}
           />
         </div>
@@ -306,6 +303,26 @@ function GroupCard({
         />
       )}
     </div>
+  );
+}
+
+// 드래그 중 커서를 따라다니는 미리보기 -- CourseTable 행의 실제 스타일(text-xs,
+// p-2, border-neutral/40 등)을 그대로 재현해 "표에서 그대로 들어올려진" 것처럼
+// 보이게 한다. 통짜 알약 모양 라벨이었던 이전 버전은 표 안의 실제 모양과 달라
+// 보인다는 피드백으로 교체함.
+function DraggedRowPreview({ course }: { course: CourseRow }) {
+  const segments = courseScheduleSegments(course);
+  const timeLabel = segments.length > 0 ? segments.map((s) => s.timeLabel).join(" / ") : "시간 미정";
+
+  return (
+    <table className="w-max rounded-lg bg-surface text-xs shadow-card-hover">
+      <tbody>
+        <tr className="border border-neutral/40">
+          <td className="max-w-[10rem] truncate p-2 font-medium">{course.courseName}</td>
+          <td className="max-w-[12rem] truncate p-2 text-text-secondary">{timeLabel}</td>
+        </tr>
+      </tbody>
+    </table>
   );
 }
 

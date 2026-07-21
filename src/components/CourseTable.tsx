@@ -12,7 +12,9 @@ export interface CourseTableExtraColumn {
 
 export interface CourseTableProps {
   courses: CourseRow[];
-  /** Per-row action slot (add/remove button). Column omitted when absent. */
+  /** Per-row slot rendered before 강의명 (leftmost) -- e.g. a drag handle. */
+  renderLeading?: (course: CourseRow) => ReactNode;
+  /** Per-row action slot (add/remove button), rendered last (rightmost). */
   renderAction?: (course: CourseRow) => ReactNode;
   /** Appended after the standard 6 columns, before 비고/action. */
   extraColumns?: CourseTableExtraColumn[];
@@ -55,6 +57,7 @@ function Cell({ text, className = "max-w-[10rem]" }: { text: string; className?:
 
 export function CourseTable({
   courses,
+  renderLeading,
   renderAction,
   extraColumns = [],
   showRemarks = false,
@@ -68,6 +71,7 @@ export function CourseTable({
       <table className="w-full text-left text-xs">
         <thead>
           <tr className="text-text-secondary">
+            {renderLeading && <th className="p-2" />}
             <th className="p-2 font-medium">강의명</th>
             <th className="p-2 font-medium">학수번호</th>
             <th className="p-2 font-medium">시간</th>
@@ -88,6 +92,7 @@ export function CourseTable({
             const competitionRate = getCompetitionRate(row.course);
             return (
               <tr key={row.key} className="border-t border-neutral/40">
+                {renderLeading && <td className="p-2">{renderLeading(row.course)}</td>}
                 <td className="p-2 font-medium">
                   <Cell text={row.course.courseName} />
                 </td>
@@ -101,7 +106,17 @@ export function CourseTable({
                   <Cell text={row.classroom} />
                 </td>
                 <td className="p-2 text-text-secondary">
-                  <Cell text={`${competitionRate.enrolled}/${competitionRate.capacity} (${competitionRate.rate.toFixed(2)})`} />
+                  <span
+                    className="block truncate"
+                    title={
+                      competitionRate.isMock
+                        ? "실제 신청 인원 데이터가 아직 없어 임의로 표시한 값입니다"
+                        : undefined
+                    }
+                  >
+                    {competitionRate.enrolled}/{competitionRate.capacity} ({competitionRate.rate.toFixed(2)})
+                    {competitionRate.isMock && <span className="text-neutral">*</span>}
+                  </span>
                 </td>
                 <td className="p-2 text-text-secondary">
                   <Cell text={row.course.professor ?? "-"} />
@@ -124,7 +139,9 @@ export function CourseTable({
             <tr>
               <td
                 className="p-2 text-text-secondary"
-                colSpan={6 + extraColumns.length + (showRemarks ? 1 : 0) + (renderAction ? 1 : 0)}
+                colSpan={
+                  6 + extraColumns.length + (showRemarks ? 1 : 0) + (renderAction ? 1 : 0) + (renderLeading ? 1 : 0)
+                }
               >
                 {emptyMessage}
               </td>
