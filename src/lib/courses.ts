@@ -14,7 +14,9 @@ export async function getCoursesForSemester(db: Queryable, semesterId: number): 
   const [courseRows] = await db.query<CourseRowWithoutSchedules>(
     `SELECT
        id, course_no AS courseNo, class_no AS classNo, course_name AS courseName,
-       professor, college, department, credit, capacity, applied_count AS appliedCount, remarks
+       professor, college, department, credit,
+       course_type AS courseType, detail_curriculum AS detailCurriculum, lecture_style AS lectureStyle,
+       capacity, applied_count AS appliedCount, remarks
      FROM courses
      WHERE semester_id = ?
      ORDER BY course_no, class_no`,

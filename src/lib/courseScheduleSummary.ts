@@ -42,8 +42,9 @@ export function courseScheduleSegments(course: CourseRow): ScheduleSegment[] {
   return Array.from(groups.values()).map((g) => {
     const dayLabel = g.days.map((d) => DAY_LABELS[d] ?? "").join(",");
     const timeLabel = g.start && g.end ? `${g.start}~${g.end}` : null;
+    const fallback = course.lectureStyle === "사이버강의" ? "사이버강의" : g.rawText;
     return {
-      timeLabel: dayLabel && timeLabel ? `${dayLabel} ${timeLabel}` : g.rawText,
+      timeLabel: dayLabel && timeLabel ? `${dayLabel} ${timeLabel}` : fallback,
       classroom: g.classroom,
     };
   });

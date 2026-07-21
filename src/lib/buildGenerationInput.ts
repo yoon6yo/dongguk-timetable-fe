@@ -18,8 +18,18 @@ export interface GenerationInput {
  * A courseId a group references that no longer exists in the fetched catalog
  * (e.g. localStorage from a previous semester) is silently dropped rather
  * than crashing — the group just has one fewer candidate.
+ *
+ * `customEvents` (personal, non-course time blocks, already synthesized as
+ * CourseRow-shaped objects by lib/customEvents.ts) are each folded in as
+ * their own required, single-candidate group -- so every combination
+ * conflict-checks against them on equal footing with real courses, and
+ * dropping one is never an option (unlike an optional course group).
  */
-export function buildGenerationInput(groups: CourseGroup[], courses: CourseRow[]): GenerationInput {
+export function buildGenerationInput(
+  groups: CourseGroup[],
+  courses: CourseRow[],
+  customEvents: CourseRow[] = []
+): GenerationInput {
   const courseById = new Map(courses.map((course) => [course.id, course]));
   const blocksByCourseId = new Map<string, TimeBlock[]>();
   const creditByCourseId = new Map<string, number>();
@@ -39,6 +49,18 @@ export function buildGenerationInput(groups: CourseGroup[], courses: CourseRow[]
 
     return { id: group.id, required: group.required, candidates };
   });
+
+  for (const event of customEvents) {
+    const key = String(event.id);
+    const blocks = toTimeBlocks(event.schedules);
+    blocksByCourseId.set(key, blocks);
+    creditByCourseId.set(key, 0);
+    generatorGroups.push({
+      id: `custom-event-group-${key}`,
+      required: true,
+      candidates: [{ courseId: key, blocks, credit: 0 }],
+    });
+  }
 
   return { groups: generatorGroups, blocksByCourseId, creditByCourseId };
 }

@@ -28,6 +28,9 @@ export interface CourseRow {
   college: string;
   department: string | null;
   credit: string;
+  courseType: string;
+  detailCurriculum: string | null;
+  lectureStyle: string | null;
   capacity: number | null;
   appliedCount: number | null;
   remarks: string | null;

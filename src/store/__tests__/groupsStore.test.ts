@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { groupDisplayName, useGroupsStore } from "../groupsStore";
 
 beforeEach(() => {
-  useGroupsStore.setState({ groups: [] });
+  useGroupsStore.setState({ groups: [], builtForSemesterCode: null, semesterMismatchDetected: false });
   window.localStorage.clear();
 });
 
@@ -99,6 +99,74 @@ describe("useGroupsStore", () => {
     useGroupsStore.getState().addCourseToGroup(idA, 101);
 
     expect(useGroupsStore.getState().groups.find((g) => g.id === idB)?.courseIds).toEqual([]);
+  });
+
+  it("moveCourseBetweenGroups moves a course from one group to another", () => {
+    useGroupsStore.getState().addGroup("A");
+    useGroupsStore.getState().addGroup("B");
+    const [idA, idB] = useGroupsStore.getState().groups.map((g) => g.id);
+    useGroupsStore.getState().addCourseToGroup(idA, 101);
+
+    useGroupsStore.getState().moveCourseBetweenGroups(idA, idB, 101);
+
+    const { groups } = useGroupsStore.getState();
+    expect(groups.find((g) => g.id === idA)?.courseIds).toEqual([]);
+    expect(groups.find((g) => g.id === idB)?.courseIds).toEqual([101]);
+  });
+
+  it("moveCourseBetweenGroups is a no-op when the course already exists in the target group", () => {
+    useGroupsStore.getState().addGroup("A");
+    useGroupsStore.getState().addGroup("B");
+    const [idA, idB] = useGroupsStore.getState().groups.map((g) => g.id);
+    useGroupsStore.getState().addCourseToGroup(idA, 101);
+    useGroupsStore.getState().addCourseToGroup(idB, 101);
+
+    useGroupsStore.getState().moveCourseBetweenGroups(idA, idB, 101);
+
+    const { groups } = useGroupsStore.getState();
+    expect(groups.find((g) => g.id === idA)?.courseIds).toEqual([]);
+    expect(groups.find((g) => g.id === idB)?.courseIds).toEqual([101]);
+  });
+
+  it("stamps builtForSemesterCode when addCourseToGroup is given one", () => {
+    useGroupsStore.getState().addGroup("A");
+    const id = useGroupsStore.getState().groups[0].id;
+
+    useGroupsStore.getState().addCourseToGroup(id, 101, "CM160.20");
+
+    expect(useGroupsStore.getState().builtForSemesterCode).toBe("CM160.20");
+  });
+
+  it("leaves builtForSemesterCode unchanged when addCourseToGroup omits it", () => {
+    useGroupsStore.getState().addGroup("A");
+    const id = useGroupsStore.getState().groups[0].id;
+
+    useGroupsStore.getState().addCourseToGroup(id, 101);
+
+    expect(useGroupsStore.getState().builtForSemesterCode).toBeNull();
+  });
+
+  it("resetGroups clears both groups and builtForSemesterCode", () => {
+    useGroupsStore.getState().addGroup("A");
+    const id = useGroupsStore.getState().groups[0].id;
+    useGroupsStore.getState().addCourseToGroup(id, 101, "CM160.20");
+
+    useGroupsStore.getState().resetGroups();
+
+    expect(useGroupsStore.getState().groups).toEqual([]);
+    expect(useGroupsStore.getState().builtForSemesterCode).toBeNull();
+  });
+
+  it("resetGroupsForSemesterMismatch clears groups/builtForSemesterCode and flags semesterMismatchDetected", () => {
+    useGroupsStore.getState().addGroup("A");
+    const id = useGroupsStore.getState().groups[0].id;
+    useGroupsStore.getState().addCourseToGroup(id, 101, "CM160.20");
+
+    useGroupsStore.getState().resetGroupsForSemesterMismatch();
+
+    expect(useGroupsStore.getState().groups).toEqual([]);
+    expect(useGroupsStore.getState().builtForSemesterCode).toBeNull();
+    expect(useGroupsStore.getState().semesterMismatchDetected).toBe(true);
   });
 });
 

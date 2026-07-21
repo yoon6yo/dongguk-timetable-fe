@@ -19,6 +19,18 @@ export function groupDisplayName(group: CourseGroup, index: number): string {
 
 interface GroupsState {
   groups: CourseGroup[];
+  /** semesterCode of the catalog the groups were last built against — stamped
+   * by addCourseToGroup when a semesterCode is supplied. Compared against the
+   * live semester by useSemesterMismatchGuard to detect a stale snapshot from
+   * a prior semester and trigger a reset. null until the first course is ever
+   * added, or after a reset. */
+  builtForSemesterCode: string | null;
+  /** Set by resetGroupsForSemesterMismatch (not the generic resetGroups) so
+   * useSemesterMismatchGuard can derive its notice-banner flag directly from
+   * this store selector during render, rather than local React state/refs
+   * (both of which the "you-might-not-need-an-effect" lint rules reject for
+   * this exact pattern). Stays true for the rest of the session once set. */
+  semesterMismatchDetected: boolean;
   /** name is optional — naming a group is a nice-to-have, not a required
    * step. An omitted/blank name stays blank (see groupDisplayName for how
    * it's shown), rather than committing a "그룹 N" placeholder as real data. */
@@ -26,8 +38,11 @@ interface GroupsState {
   removeGroup: (id: string) => void;
   renameGroup: (id: string, name: string) => void;
   toggleRequired: (id: string) => void;
-  addCourseToGroup: (groupId: string, courseId: number) => void;
+  addCourseToGroup: (groupId: string, courseId: number, semesterCode?: string) => void;
   removeCourseFromGroup: (groupId: string, courseId: number) => void;
+  moveCourseBetweenGroups: (fromGroupId: string, toGroupId: string, courseId: number) => void;
+  resetGroups: () => void;
+  resetGroupsForSemesterMismatch: () => void;
 }
 
 function makeGroupId(): string {
@@ -40,6 +55,8 @@ export const useGroupsStore = create<GroupsState>()(
   persist(
     (set) => ({
       groups: [],
+      builtForSemesterCode: null,
+      semesterMismatchDetected: false,
 
       addGroup: (name) =>
         set((state) => ({
@@ -59,13 +76,14 @@ export const useGroupsStore = create<GroupsState>()(
           groups: state.groups.map((g) => (g.id === id ? { ...g, required: !g.required } : g)),
         })),
 
-      addCourseToGroup: (groupId, courseId) =>
+      addCourseToGroup: (groupId, courseId, semesterCode) =>
         set((state) => ({
           groups: state.groups.map((g) =>
             g.id === groupId && !g.courseIds.includes(courseId)
               ? { ...g, courseIds: [...g.courseIds, courseId] }
               : g
           ),
+          builtForSemesterCode: semesterCode ?? state.builtForSemesterCode,
         })),
 
       removeCourseFromGroup: (groupId, courseId) =>
@@ -74,6 +92,24 @@ export const useGroupsStore = create<GroupsState>()(
             g.id === groupId ? { ...g, courseIds: g.courseIds.filter((id) => id !== courseId) } : g
           ),
         })),
+
+      moveCourseBetweenGroups: (fromGroupId, toGroupId, courseId) =>
+        set((state) => ({
+          groups: state.groups.map((g) => {
+            if (g.id === fromGroupId && g.id !== toGroupId) {
+              return { ...g, courseIds: g.courseIds.filter((id) => id !== courseId) };
+            }
+            if (g.id === toGroupId && !g.courseIds.includes(courseId)) {
+              return { ...g, courseIds: [...g.courseIds, courseId] };
+            }
+            return g;
+          }),
+        })),
+
+      resetGroups: () => set({ groups: [], builtForSemesterCode: null }),
+
+      resetGroupsForSemesterMismatch: () =>
+        set({ groups: [], builtForSemesterCode: null, semesterMismatchDetected: true }),
     }),
     { name: "timetable-groups" }
   )

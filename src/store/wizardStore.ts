@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export const WIZARD_STEPS = ["start", "groups", "weights", "results"] as const;
+export const WIZARD_STEPS = ["start", "groups", "results"] as const;
 export type WizardStep = (typeof WIZARD_STEPS)[number];
 
 interface WizardState {

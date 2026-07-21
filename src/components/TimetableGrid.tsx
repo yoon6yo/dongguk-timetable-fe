@@ -11,14 +11,26 @@ interface RenderBlock {
   classroom: string | null;
 }
 
-function splitBlocks(courses: CourseRow[]): { blocks: RenderBlock[]; unparsed: { course: CourseRow; rawText: string }[] } {
+function splitBlocks(
+  courses: CourseRow[]
+): { blocks: RenderBlock[]; unparsed: { course: CourseRow; rawText: string }[]; noSchedule: { course: CourseRow }[] } {
   const blocks: RenderBlock[] = [];
   const unparsed: { course: CourseRow; rawText: string }[] = [];
+  const noScheduleCourseIds = new Set<number>();
+  const noSchedule: { course: CourseRow }[] = [];
 
   for (const course of courses) {
     for (const schedule of course.schedules) {
       if (schedule.dayOfWeek == null || !schedule.startTime || !schedule.endTime) {
-        unparsed.push({ course, rawText: schedule.rawText });
+        // 사이버강의는 원래 시간표가 없는 게 정상 — 진짜 파싱 실패와 구분해서 표시한다.
+        if (course.lectureStyle === "사이버강의") {
+          if (!noScheduleCourseIds.has(course.id)) {
+            noScheduleCourseIds.add(course.id);
+            noSchedule.push({ course });
+          }
+        } else {
+          unparsed.push({ course, rawText: schedule.rawText });
+        }
         continue;
       }
       blocks.push({
@@ -31,15 +43,25 @@ function splitBlocks(courses: CourseRow[]): { blocks: RenderBlock[]; unparsed: {
     }
   }
 
-  return { blocks, unparsed };
+  return { blocks, unparsed, noSchedule };
 }
 
 function formatHourLabel(minutes: number): string {
   return `${Math.floor(minutes / 60)}:00`;
 }
 
-export function TimetableGrid({ courses, compact = false }: { courses: CourseRow[]; compact?: boolean }) {
-  const { blocks, unparsed } = splitBlocks(courses);
+export function TimetableGrid({
+  courses,
+  compact = false,
+  blackout = false,
+}: {
+  courses: CourseRow[];
+  compact?: boolean;
+  /** Hides course name/classroom text, leaving only the colored blocks --
+   * for sharing free/busy shape without revealing course details. */
+  blackout?: boolean;
+}) {
+  const { blocks, unparsed, noSchedule } = splitBlocks(courses);
   const layout = computeGridLayout(blocks);
   const dayColumns = activeDayColumns(blocks);
   const rowIndexes = Array.from({ length: layout.totalRows }, (_, i) => i);
@@ -54,7 +76,7 @@ export function TimetableGrid({ courses, compact = false }: { courses: CourseRow
       {/* Grid columns use a fixed minWidth (not just 1fr) so on narrow viewports
           the day columns stay legible and the container scrolls horizontally
           instead of squeezing every column unreadably thin. */}
-      <div className="overflow-x-auto rounded-lg border border-neutral">
+      <div className="overflow-x-auto rounded-xl border border-neutral/30 bg-background">
         <div
           className={compact ? "grid text-[10px]" : "grid text-sm"}
           style={{
@@ -63,11 +85,11 @@ export function TimetableGrid({ courses, compact = false }: { courses: CourseRow
             minWidth: `${timeColWidth + dayColumns.length * colWidth}rem`,
           }}
         >
-          <div className="border-b border-r border-neutral bg-surface" style={{ gridColumn: 1, gridRow: 1 }} />
+          <div className="border-b border-r border-neutral/30 bg-surface" style={{ gridColumn: 1, gridRow: 1 }} />
           {dayColumns.map((day, colIdx) => (
             <div
               key={day}
-              className="flex items-center justify-center border-b border-r border-neutral bg-surface font-medium"
+              className="flex items-center justify-center border-b border-r border-neutral/30 bg-surface font-semibold tracking-wide"
               style={{ gridColumn: colIdx + 2, gridRow: 1 }}
             >
               {DAY_LABELS[day]}
@@ -79,7 +101,7 @@ export function TimetableGrid({ courses, compact = false }: { courses: CourseRow
             return (
               <div
                 key={`time-${rowIdx}`}
-                className="flex items-start justify-end border-b border-r border-neutral pr-1 text-[11px] text-text-secondary"
+                className="flex items-start justify-end border-r border-neutral/30 pr-1 text-[11px] text-text-secondary"
                 style={{ gridColumn: 1, gridRow: rowIdx + 2 }}
               >
                 {minutes % 60 === 0 ? formatHourLabel(minutes) : ""}
@@ -91,7 +113,7 @@ export function TimetableGrid({ courses, compact = false }: { courses: CourseRow
             rowIndexes.map((rowIdx) => (
               <div
                 key={`cell-${day}-${rowIdx}`}
-                className="border-b border-r border-neutral"
+                className="border-r border-neutral/15"
                 style={{ gridColumn: colIdx + 2, gridRow: rowIdx + 2 }}
               />
             ))
@@ -108,8 +130,8 @@ export function TimetableGrid({ courses, compact = false }: { courses: CourseRow
                 key={idx}
                 className={
                   compact
-                    ? "overflow-hidden rounded-sm px-0.5 leading-tight"
-                    : "m-0.5 overflow-hidden rounded-md px-1 py-0.5 text-[11px] leading-tight"
+                    ? "flex flex-col items-center justify-center overflow-hidden rounded-md px-0.5 text-center leading-tight shadow-sm"
+                    : "m-0.5 flex flex-col items-center justify-center overflow-hidden rounded-lg px-1 py-0.5 text-center text-[11px] leading-tight shadow-sm"
                 }
                 style={{
                   gridColumn: colIdx + 2,
@@ -118,15 +140,29 @@ export function TimetableGrid({ courses, compact = false }: { courses: CourseRow
                   color,
                 }}
               >
-                <div className="truncate font-semibold">{block.course.courseName}</div>
-                {!compact && block.classroom && <div className="truncate opacity-80">{block.classroom}</div>}
+                {!blackout && (
+                  <div className="line-clamp-2 font-semibold" title={block.course.courseName}>
+                    {block.course.courseName}
+                  </div>
+                )}
+                {!blackout && !compact && block.classroom && (
+                  <div className="truncate opacity-80" title={block.classroom}>
+                    {block.classroom}
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
       </div>
 
-      {!compact && unparsed.length > 0 && (
+      {!blackout && !compact && noSchedule.length > 0 && (
+        <div className="mt-2 rounded-md border border-neutral bg-surface p-2 text-xs text-text-secondary">
+          사이버강의로 별도 시간표가 없는 과목: {noSchedule.map((n) => n.course.courseName).join(", ")}
+        </div>
+      )}
+
+      {!blackout && !compact && unparsed.length > 0 && (
         <div className="mt-2 rounded-md border border-error/40 bg-error/5 p-2 text-xs text-error">
           시간표 자동 인식에 실패한 항목이 있습니다 — 직접 확인해 주세요:
           <ul className="list-inside list-disc">

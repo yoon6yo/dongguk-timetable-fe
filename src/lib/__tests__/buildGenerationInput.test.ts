@@ -13,6 +13,9 @@ function makeCourse(id: number, overrides: Partial<CourseRow> = {}): CourseRow {
     college: "불교대학",
     department: null,
     credit: "3.0",
+    courseType: "전공",
+    detailCurriculum: null,
+    lectureStyle: "일반강의",
     capacity: null,
     appliedCount: null,
     remarks: null,
@@ -113,5 +116,23 @@ describe("buildGenerationInput", () => {
 
     expect(resolved[0].candidates[0].credit).toBe(0);
     expect(creditByCourseId.get("1")).toBe(0);
+  });
+
+  it("folds each custom event into its own required, single-candidate, 0-credit group", () => {
+    const customEvent = makeCourse(-1, {
+      credit: "0",
+      schedules: [
+        { dayOfWeek: 3, periodStart: null, periodEnd: null, startTime: "10:00:00", endTime: "12:00:00", classroom: null, rawText: "수 10:00~12:00" },
+      ],
+    });
+    const { groups: resolved, blocksByCourseId, creditByCourseId } = buildGenerationInput([], [], [customEvent]);
+
+    expect(resolved).toHaveLength(1);
+    expect(resolved[0].required).toBe(true);
+    expect(resolved[0].candidates).toEqual([
+      { courseId: "-1", blocks: [{ dayOfWeek: 3, startMinutes: 600, endMinutes: 720, classroom: null }], credit: 0 },
+    ]);
+    expect(blocksByCourseId.get("-1")).toHaveLength(1);
+    expect(creditByCourseId.get("-1")).toBe(0);
   });
 });

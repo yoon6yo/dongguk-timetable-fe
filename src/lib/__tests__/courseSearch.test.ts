@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { listColleges, listDepartments, searchCourses } from "../courseSearch";
+import { listColleges, listCourseTypes, listDepartments, searchCourses } from "../courseSearch";
 import type { CourseRow } from "../types";
 
 function makeCourse(overrides: Partial<CourseRow> = {}): CourseRow {
@@ -13,6 +13,9 @@ function makeCourse(overrides: Partial<CourseRow> = {}): CourseRow {
     college: "불교대학",
     department: "불교학부",
     credit: "3.0",
+    courseType: "전공",
+    detailCurriculum: null,
+    lectureStyle: "일반강의",
     capacity: 0,
     appliedCount: null,
     remarks: null,
@@ -62,6 +65,52 @@ describe("searchCourses", () => {
   it("does not crash on a course with a null professor", () => {
     const withNullProfessor = [makeCourse({ id: 4, professor: null })];
     expect(searchCourses(withNullProfessor, { query: "아무개" })).toEqual([]);
+  });
+
+  it("filters by courseType", () => {
+    const withTypes = [
+      makeCourse({ id: 1, courseType: "전공" }),
+      makeCourse({ id: 2, courseType: "교양" }),
+    ];
+    expect(searchCourses(withTypes, { courseType: "교양" }).map((c) => c.id)).toEqual([2]);
+  });
+
+  it("filters by dayOfWeek, matching if any schedule falls on that day", () => {
+    const withSchedules = [
+      makeCourse({
+        id: 1,
+        schedules: [
+          { dayOfWeek: 2, periodStart: "1", periodEnd: "2", startTime: "09:00:00", endTime: "10:30:00", classroom: "A", rawText: "화" },
+        ],
+      }),
+      makeCourse({
+        id: 2,
+        schedules: [
+          { dayOfWeek: 4, periodStart: "1", periodEnd: "2", startTime: "09:00:00", endTime: "10:30:00", classroom: "A", rawText: "목" },
+        ],
+      }),
+    ];
+    expect(searchCourses(withSchedules, { dayOfWeek: 2 }).map((c) => c.id)).toEqual([1]);
+  });
+
+  it("sorts by credit descending when sort is 'credit'", () => {
+    const withCredits = [makeCourse({ id: 1, credit: "2.0" }), makeCourse({ id: 2, credit: "3.0" })];
+    expect(searchCourses(withCredits, { sort: "credit" }).map((c) => c.id)).toEqual([2, 1]);
+  });
+
+  it("sorts by competition rate descending when sort is 'competition'", () => {
+    const withCapacity = [
+      makeCourse({ id: 1, capacity: 10, appliedCount: 5 }),
+      makeCourse({ id: 2, capacity: 10, appliedCount: 9 }),
+    ];
+    expect(searchCourses(withCapacity, { sort: "competition" }).map((c) => c.id)).toEqual([2, 1]);
+  });
+});
+
+describe("listCourseTypes", () => {
+  it("returns unique, sorted course types", () => {
+    const courses = [makeCourse({ courseType: "전공" }), makeCourse({ courseType: "교양" }), makeCourse({ courseType: "전공" })];
+    expect(listCourseTypes(courses)).toEqual(["교양", "전공"]);
   });
 });
 
