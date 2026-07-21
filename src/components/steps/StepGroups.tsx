@@ -1,17 +1,14 @@
 "use client";
 
-import { DndContext, KeyboardSensor, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import { DndContext, DragOverlay, KeyboardSensor, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 
 import { listColleges, listCourseTypes, listDepartments, searchCourses, type CourseSortOption } from "@/lib/courseSearch";
-import { computeCreditRangeWarning, type CreditRangeWarning } from "@/lib/creditRangeWarning";
 import { DAY_LABELS } from "@/lib/timeGrid";
 import type { CourseRow } from "@/lib/types";
-import { MAX_SCHOOL_CREDIT, MIN_SCHOOL_CREDIT, useCreditLimitStore } from "@/store/creditLimitStore";
 import { useCoursesStore } from "@/store/coursesStore";
 import { useCustomEventsStore } from "@/store/customEventsStore";
 import { groupDisplayName, useGroupsStore, type CourseGroup } from "@/store/groupsStore";
-import { useWizardStore } from "@/store/wizardStore";
 
 import { CourseTable } from "../CourseTable";
 import { Modal } from "../Modal";
@@ -28,14 +25,10 @@ export function StepGroups() {
   const addGroup = useGroupsStore((s) => s.addGroup);
   const moveCourseBetweenGroups = useGroupsStore((s) => s.moveCourseBetweenGroups);
   const courses = useCoursesStore((s) => s.courses);
-  const maxCredit = useCreditLimitStore((s) => s.maxCredit);
-  const hasAttemptedGenerate = useWizardStore((s) => s.hasAttemptedGenerate);
 
   const courseById = useMemo(() => new Map(courses.map((c) => [c.id, c])), [courses]);
-  const warning = useMemo(
-    () => computeCreditRangeWarning(groups, courseById, MIN_SCHOOL_CREDIT, maxCredit ?? MAX_SCHOOL_CREDIT),
-    [groups, courseById, maxCredit]
-  );
+
+  const [activeCourse, setActiveCourse] = useState<CourseRow | null>(null);
 
   // 포인터(마우스/터치) 뿐 아니라 키보드로도 그룹 간 과목 이동이 가능하도록 두 센서를 함께 등록.
   const sensors = useSensors(
@@ -50,7 +43,14 @@ export function StepGroups() {
     if (groups.length === 0) addGroup();
   }, [groups.length, addGroup]);
 
+  function handleDragStart(event: DragStartEvent) {
+    const data = event.active.data.current as DragData | undefined;
+    if (!data) return;
+    setActiveCourse(courseById.get(data.courseId) ?? null);
+  }
+
   function handleDragEnd(event: DragEndEvent) {
+    setActiveCourse(null);
     const { active, over } = event;
     if (!over) return;
     const data = active.data.current as DragData | undefined;
@@ -64,11 +64,9 @@ export function StepGroups() {
     <div className="space-y-4">
       <p className="text-text-secondary">
         그룹을 만들고 각 그룹에 후보 과목을 담으세요. 그룹 이름은 안 정해도 괜찮아요 — 그룹에서 한 과목을
-        꼭 골라야 하는지(필수) 안 골라도 되는지(선택)만 정하면 됩니다. 과목을 다른 그룹으로 옮기려면
-        ⠿ 손잡이를 끌어다 놓으세요.
+        꼭 골라야 하는지(필수) 안 골라도 되는지(선택)만 정하면 됩니다. 담은 과목 옆의 점 6개 손잡이를
+        끌어다 다른 그룹에 놓으면 과목을 옮길 수 있어요.
       </p>
-
-      {hasAttemptedGenerate && warning && <CreditRangeWarningBanner warning={warning} />}
 
       <button
         type="button"
@@ -78,13 +76,20 @@ export function StepGroups() {
         + 그룹 추가
       </button>
 
-      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+      <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={() => setActiveCourse(null)}>
         <div className="space-y-3">
           {groups.map((group, index) => (
             <GroupCard key={group.id} group={group} index={index} courses={courses} courseById={courseById} />
           ))}
           {groups.length === 0 && <p className="text-sm text-text-secondary">아직 만든 그룹이 없습니다.</p>}
         </div>
+        <DragOverlay dropAnimation={null}>
+          {activeCourse && (
+            <div className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white shadow-card-hover">
+              {activeCourse.courseName}
+            </div>
+          )}
+        </DragOverlay>
       </DndContext>
 
       <CustomEventsSection />
@@ -207,17 +212,6 @@ function AddCustomEventModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-function CreditRangeWarningBanner({ warning }: { warning: CreditRangeWarning }) {
-  const message =
-    warning.type === "empty-required"
-      ? `"${warning.groupName}" 그룹이 필수인데 담긴 과목이 없어요 — 과목을 최소 1개 담아야 조합을 만들 수 있어요.`
-      : warning.type === "above-max"
-        ? `필수 그룹만 골라도 최소 ${warning.minPossible}학점이라 목표 학점(${warning.maxCredit}학점)을 넘어요 — 필수 그룹을 줄이거나 학점이 적은 과목을 담아보세요.`
-        : `필수 그룹만으로는 최대 ${warning.maxPossible}학점이라 최소 학점(${warning.minCredit}학점)에 못 미쳐요 — 선택 그룹에서 과목을 더 담아보세요.`;
-
-  return <div className="rounded-xl bg-error/10 p-3 text-sm text-error shadow-card">⚠ {message}</div>;
-}
-
 function GroupCard({
   group,
   index,
@@ -329,12 +323,20 @@ function DragHandle({ groupId, courseId, courseName }: { groupId: string; course
       type="button"
       {...listeners}
       {...attributes}
+      title="끌어서 다른 그룹으로 이동"
       aria-label={`${courseName} 다른 그룹으로 이동`}
-      className={`cursor-grab touch-none text-text-secondary hover:text-primary active:cursor-grabbing ${
+      className={`flex shrink-0 cursor-grab touch-none items-center justify-center rounded p-1 text-text-secondary hover:bg-neutral/20 hover:text-primary active:cursor-grabbing ${
         isDragging ? "opacity-50" : ""
       }`}
     >
-      ⠿
+      <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+        <circle cx="6" cy="5" r="1.5" />
+        <circle cx="14" cy="5" r="1.5" />
+        <circle cx="6" cy="10" r="1.5" />
+        <circle cx="14" cy="10" r="1.5" />
+        <circle cx="6" cy="15" r="1.5" />
+        <circle cx="14" cy="15" r="1.5" />
+      </svg>
     </button>
   );
 }
@@ -358,10 +360,13 @@ function AddCourseModal({
   const [dayOfWeek, setDayOfWeek] = useState("");
   const [sort, setSort] = useState<CourseSortOption>("default");
   const [queryInput, setQueryInput] = useState("");
-  const [isComposing, setIsComposing] = useState(false);
-  // 한글 입력은 IME로 자모가 조합되는 도중에도 onChange가 매 타이핑마다 발생하므로,
-  // 조합이 끝나지 않은 마지막 글자를 검색어에서 제외해 오검색을 피한다.
-  const query = isComposing ? queryInput.slice(0, -1) : queryInput;
+  // 한글은 IME가 자모를 조합하는 도중에도 onChange가 계속 발생하므로, 별도
+  // 처리 없이 그때그때의 입력값을 그대로 검색어로 써도 된다 -- 조합 중인 음절은
+  // 아직 courseName 등에 없는 문자열이라 자연히 매칭되지 않다가, 음절이
+  // 완성되는 순간부터 자동으로 결과가 나타난다. (이전에는 "조합 중엔 마지막
+  // 글자 무시" 방식을 썼는데, 여러 글자를 빠르게 입력할 때 필요한 글자까지
+  // 함께 잘려나가 검색이 아예 안 되는 것처럼 보이는 회귀가 있었다.)
+  const query = queryInput;
 
   const colleges = useMemo(() => listColleges(courses), [courses]);
   const departments = useMemo(() => listDepartments(courses, college || undefined), [courses, college]);
@@ -450,11 +455,6 @@ function AddCourseModal({
           type="text"
           value={queryInput}
           onChange={(e) => setQueryInput(e.target.value)}
-          onCompositionStart={() => setIsComposing(true)}
-          onCompositionEnd={(e) => {
-            setIsComposing(false);
-            setQueryInput(e.currentTarget.value);
-          }}
           placeholder="과목명 / 학수번호 / 교수명 검색"
           autoFocus
           className="w-full rounded-lg border border-neutral px-2 py-1.5 text-xs outline-none focus:border-primary"

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { computeCreditRangeWarning } from "../creditRangeWarning";
+import { computeCreditRangeWarning, formatCreditRangeWarning } from "../creditRangeWarning";
 import type { CourseGroup } from "../../store/groupsStore";
 import type { CourseRow } from "../types";
 
@@ -104,5 +104,23 @@ describe("computeCreditRangeWarning", () => {
     const courseById = new Map([course(1, "3.0")]);
     const groups = [group({ courseIds: [1, 999] })];
     expect(computeCreditRangeWarning(groups, courseById, 0, 21)).toBeNull();
+  });
+});
+
+describe("formatCreditRangeWarning", () => {
+  it("formats empty-required", () => {
+    expect(formatCreditRangeWarning({ type: "empty-required", groupName: "전공 필수" })).toContain("전공 필수");
+  });
+
+  it("formats above-max", () => {
+    const message = formatCreditRangeWarning({ type: "above-max", minPossible: 24, maxCredit: 21 });
+    expect(message).toContain("24");
+    expect(message).toContain("21");
+  });
+
+  it("formats below-min", () => {
+    const message = formatCreditRangeWarning({ type: "below-min", maxPossible: 6, minCredit: 12 });
+    expect(message).toContain("6");
+    expect(message).toContain("12");
   });
 });

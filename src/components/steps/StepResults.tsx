@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from "react";
 
 import { buildGenerationInput, type GenerationInput } from "@/lib/buildGenerationInput";
 import { rankCombinations, type ScoredCombination } from "@/lib/combinationGenerator";
+import { computeCreditRangeWarning, formatCreditRangeWarning, type CreditRangeWarning } from "@/lib/creditRangeWarning";
 import { customEventToCourseRow } from "@/lib/customEvents";
 import { exportTimetableAsCsv } from "@/lib/exportCsv";
 import { exportElementAsPng } from "@/lib/exportImage";
@@ -24,11 +25,6 @@ import { TimetableExportCard } from "../TimetableExportCard";
 import { TimetableGrid } from "../TimetableGrid";
 import { TimetableTable } from "../TimetableTable";
 import { StepWeights } from "./StepWeights";
-
-// Rendering a full mini-grid for all (up to 200) combinations would be a real
-// perf hit -- cap the visual preview to the top-scored N (already sorted) and
-// fall back to a plain text row beyond that. Still clickable either way.
-const GRID_PREVIEW_LIMIT = 12;
 
 /** Stable identity for a combo, independent of its position in the ranked
  * list -- lets the selected card survive a re-sort (preset/advanced weight
@@ -53,6 +49,7 @@ export function StepResults() {
   const [blackoutExport, setBlackoutExport] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [savedNotice, setSavedNotice] = useState(false);
+  const [creditWarning, setCreditWarning] = useState<CreditRangeWarning | null>(null);
   // 검색으로 생성된 조합 집합 자체(어떤 조합이 시간 충돌 없이 유효한지)는 가중치와
   // 무관 -- 순위만 바뀐다. 그래서 정렬 기준(프리셋/고급 설정)을 바꿀 때마다 워커를
   // 다시 돌리지 않고, 생성 시점에 저장해둔 이 맵으로 메인 스레드에서 즉시 재정렬한다.
@@ -83,6 +80,13 @@ export function StepResults() {
     const emptyGroupIds = groups.filter((g) => g.courseIds.length === 0).map((g) => g.id);
     emptyGroupIds.forEach(removeGroup);
     const remainingGroups = groups.filter((g) => g.courseIds.length > 0);
+
+    // 학점 범위상 애초에 불가능한 조합인지는 그룹 탭에 상시 배너로 띄우지 않고,
+    // "시간표 생성"을 눌러 실제로 시도하는 시점에만 모달로 알려준다.
+    const courseByIdNum = new Map(courses.map((c) => [c.id, c]));
+    const warning = computeCreditRangeWarning(remainingGroups, courseByIdNum, MIN_SCHOOL_CREDIT, maxCredit ?? MAX_SCHOOL_CREDIT);
+    setCreditWarning(warning);
+
     const { groups: generatorGroups, blocksByCourseId, creditByCourseId } = buildGenerationInput(
       remainingGroups,
       courses,
@@ -146,6 +150,12 @@ export function StepResults() {
         {running ? "생성 중..." : "시간표 조합 생성하기"}
       </button>
 
+      {creditWarning && (
+        <Modal title="학점 범위 안내" onClose={() => setCreditWarning(null)}>
+          <p className="text-sm text-error">⚠ {formatCreditRangeWarning(creditWarning)}</p>
+        </Modal>
+      )}
+
       {error && <p className="text-sm text-error">{error}</p>}
 
       {result && (
@@ -208,7 +218,7 @@ export function StepResults() {
               const key = comboKey(combo);
               const isSelected = selectedKey === key;
               return (
-                <li key={key} className={idx >= GRID_PREVIEW_LIMIT ? "sm:col-span-2" : undefined}>
+                <li key={key}>
                   <button
                     type="button"
                     onClick={() => setSelectedKey(key)}
@@ -222,15 +232,9 @@ export function StepResults() {
                         {combo.totalCredit}학점 · 점수 {combo.score.total.toFixed(1)}
                       </span>
                     </div>
-                    {idx < GRID_PREVIEW_LIMIT ? (
-                      <div className="mt-2">
-                        <TimetableGrid courses={comboCourses} compact />
-                      </div>
-                    ) : (
-                      <p className="mt-1 text-text-secondary">
-                        {comboCourses.map((c) => c.courseName).join(", ") || "(선택 없음)"}
-                      </p>
-                    )}
+                    <div className="mt-2">
+                      <TimetableGrid courses={comboCourses} compact />
+                    </div>
                   </button>
                 </li>
               );
@@ -239,53 +243,60 @@ export function StepResults() {
 
           {selected && (
             <div className="space-y-3 rounded-xl bg-surface p-3 shadow-card">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm font-medium">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold">선택한 시간표</h3>
+                <p className="text-xs text-text-secondary">
                   {selectedCourses.length}과목 · {selected.totalCredit}학점
                 </p>
-                <div className="flex flex-wrap items-center gap-2">
-                  <label className="flex items-center gap-1 text-xs text-text-secondary">
-                    <input
-                      type="checkbox"
-                      checked={blackoutExport}
-                      onChange={(e) => setBlackoutExport(e.target.checked)}
-                    />
-                    정보 가리기 (색 블록만)
-                  </label>
-                  <button
-                    type="button"
-                    onClick={handleExportPng}
-                    className="rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
-                  >
-                    이미지로 저장
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleExportCsv}
-                    className="rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
-                  >
-                    CSV로 저장
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleExportTxt}
-                    className="rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
-                  >
-                    텍스트로 저장
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleSaveTimetable}
-                    className="rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
-                  >
-                    {savedNotice ? "저장됨 ✓" : "저장된 시간표에 추가"}
-                  </button>
-                </div>
               </div>
 
               <div className="grid gap-3 bg-background p-2 lg:grid-cols-2">
                 <TimetableGrid courses={selectedCourses} />
                 <TimetableTable courses={selectedCourses} />
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 border-t border-neutral/20 pt-3">
+                <button
+                  type="button"
+                  onClick={handleSaveTimetable}
+                  className="rounded-full bg-primary-tint px-3 py-1 text-xs font-semibold text-primary transition-all duration-150 hover:bg-primary hover:text-white active:scale-95"
+                >
+                  {savedNotice ? "저장됨 ✓" : "★ 저장된 시간표에 추가"}
+                </button>
+                <span className="h-4 w-px bg-neutral/30" />
+                <span className="text-xs font-medium text-text-secondary">내보내기</span>
+                <span className="flex items-center gap-1 rounded-full border border-neutral pl-3 pr-1 text-xs font-semibold">
+                  <button
+                    type="button"
+                    onClick={handleExportPng}
+                    className="py-1 transition-colors duration-150 hover:text-primary"
+                  >
+                    이미지(PNG)
+                  </button>
+                  <span className="h-3 w-px bg-neutral/30" />
+                  <label className="flex items-center gap-1 rounded-full px-2 py-1 font-normal text-text-secondary hover:text-primary">
+                    <input
+                      type="checkbox"
+                      checked={blackoutExport}
+                      onChange={(e) => setBlackoutExport(e.target.checked)}
+                    />
+                    정보 가리기(색 블록만)
+                  </label>
+                </span>
+                <button
+                  type="button"
+                  onClick={handleExportCsv}
+                  className="rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
+                >
+                  CSV
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExportTxt}
+                  className="rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
+                >
+                  텍스트
+                </button>
               </div>
 
               {/* Off-screen (not display:none, so html-to-image can still rasterize it) --

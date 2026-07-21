@@ -110,38 +110,41 @@ function SavedDetail({ item }: { item: SavedTimetable }) {
 
   return (
     <div className="mt-4 space-y-3 rounded-xl bg-surface p-3 shadow-card">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm font-medium">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold">저장된 시간표</h3>
+        <p className="text-xs text-text-secondary">
           {item.courses.length}과목 · {item.totalCredit}학점
         </p>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={handleExportPng}
-            className="rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
-          >
-            이미지로 저장
-          </button>
-          <button
-            type="button"
-            onClick={() => exportTimetableAsCsv(item.courses, "timetable.csv")}
-            className="rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
-          >
-            CSV로 저장
-          </button>
-          <button
-            type="button"
-            onClick={() => exportTimetableAsTxt(item.courses, "timetable.txt")}
-            className="rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
-          >
-            텍스트로 저장
-          </button>
-        </div>
       </div>
 
       <div className="grid gap-3 bg-background p-2 lg:grid-cols-2">
         <TimetableGrid courses={item.courses} />
         <CourseTable courses={item.courses} mode="expanded" showRemarks />
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2 border-t border-neutral/20 pt-3">
+        <span className="text-xs font-medium text-text-secondary">내보내기</span>
+        <button
+          type="button"
+          onClick={handleExportPng}
+          className="rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
+        >
+          이미지(PNG)
+        </button>
+        <button
+          type="button"
+          onClick={() => exportTimetableAsCsv(item.courses, "timetable.csv")}
+          className="rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
+        >
+          CSV
+        </button>
+        <button
+          type="button"
+          onClick={() => exportTimetableAsTxt(item.courses, "timetable.txt")}
+          className="rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
+        >
+          텍스트
+        </button>
       </div>
 
       {/* Off-screen PNG export target -- grid-only 에타 스타일 card, same as StepResults. */}

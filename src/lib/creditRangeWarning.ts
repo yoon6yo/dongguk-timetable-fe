@@ -63,3 +63,17 @@ export function computeCreditRangeWarning(
   }
   return null;
 }
+
+/** User-facing message for a warning -- shared so every caller (currently
+ * just the "시간표 생성" 클릭 시 모달, see StepResults.tsx) renders identical
+ * copy instead of re-deriving it. */
+export function formatCreditRangeWarning(warning: CreditRangeWarning): string {
+  switch (warning.type) {
+    case "empty-required":
+      return `"${warning.groupName}" 그룹이 필수인데 담긴 과목이 없어요 — 과목을 최소 1개 담아야 조합을 만들 수 있어요.`;
+    case "above-max":
+      return `필수 그룹만 골라도 최소 ${warning.minPossible}학점이라 목표 학점(${warning.maxCredit}학점)을 넘어요 — 필수 그룹을 줄이거나 학점이 적은 과목을 담아보세요.`;
+    case "below-min":
+      return `필수 그룹만으로는 최대 ${warning.maxPossible}학점이라 최소 학점(${warning.minCredit}학점)에 못 미쳐요 — 선택 그룹에서 과목을 더 담아보세요.`;
+  }
+}
