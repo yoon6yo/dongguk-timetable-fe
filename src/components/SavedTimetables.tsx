@@ -1,16 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { exportTimetableAsCsv } from "@/lib/exportCsv";
 import { exportElementAsPng } from "@/lib/exportImage";
 import { exportTimetableAsTxt } from "@/lib/exportTxt";
+import { refreshCompetitionRate } from "@/lib/refreshCompetitionRate";
 import {
   savedTimetableDisplayName,
   useSavedTimetablesStore,
   type SavedTimetable,
 } from "@/store/savedTimetablesStore";
+import { useCoursesStore } from "@/store/coursesStore";
 
 import { CourseTable } from "./CourseTable";
 import { TimetableExportCard } from "./TimetableExportCard";
@@ -18,6 +20,14 @@ import { TimetableGrid } from "./TimetableGrid";
 
 export function SavedTimetables() {
   const saved = useSavedTimetablesStore((s) => s.saved);
+  const fetchCourses = useCoursesStore((s) => s.fetchCourses);
+
+  // 저장된 시간표는 저장 시점의 capacity/appliedCount를 그대로 얼려서 갖고
+  // 있어서(savedTimetablesStore 참고), 최신 학기 카탈로그를 불러와야
+  // SavedDetail이 학수번호 기준으로 경쟁률을 갱신해 보여줄 수 있다.
+  useEffect(() => {
+    fetchCourses();
+  }, [fetchCourses]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selected = saved.find((s) => s.id === selectedId) ?? null;
 
@@ -25,9 +35,14 @@ export function SavedTimetables() {
     <div className="mx-auto flex max-w-2xl flex-col px-4 py-8">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-xl font-bold">저장된 시간표</h1>
-        <Link href="/" className="text-sm font-medium text-primary hover:text-primary-hover">
-          ← 시간표 만들기로
-        </Link>
+        <div className="flex gap-3 text-sm font-medium">
+          <Link href="/" className="text-text-secondary hover:text-primary">
+            홈
+          </Link>
+          <Link href="/wizard" className="text-primary hover:text-primary-hover">
+            시간표 만들기로
+          </Link>
+        </div>
       </div>
 
       {saved.length === 0 && (
@@ -102,6 +117,12 @@ function SavedCard({
 
 function SavedDetail({ item }: { item: SavedTimetable }) {
   const exportRef = useRef<HTMLDivElement>(null);
+  const liveSemesterId = useCoursesStore((s) => s.semester?.id ?? null);
+  const liveCourses = useCoursesStore((s) => s.courses);
+  const coursesWithFreshRate = useMemo(
+    () => refreshCompetitionRate(item.courses, item.semesterId, liveSemesterId, liveCourses),
+    [item.courses, item.semesterId, liveSemesterId, liveCourses]
+  );
 
   async function handleExportPng() {
     if (!exportRef.current) return;
@@ -119,7 +140,7 @@ function SavedDetail({ item }: { item: SavedTimetable }) {
 
       <div className="grid gap-3 bg-background p-2 lg:grid-cols-2">
         <TimetableGrid courses={item.courses} />
-        <CourseTable courses={item.courses} showRemarks />
+        <CourseTable courses={coursesWithFreshRate} showRemarks />
       </div>
 
       <div className="flex flex-wrap items-center gap-2 border-t border-neutral/20 pt-3">

@@ -1,5 +1,5 @@
-import { Wizard } from "@/components/Wizard";
+import { Landing } from "@/components/Landing";
 
 export default function Home() {
-  return <Wizard />;
+  return <Landing />;
 }

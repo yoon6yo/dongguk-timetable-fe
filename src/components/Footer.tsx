@@ -1,4 +1,4 @@
-const CONTRIBUTORS = ["yoon6yo"];
+const CONTRIBUTORS = ["yoon6yo", "dongmin0204"];
 const GITHUB_URL = "https://github.com/yoon6yo/dongguk-timetable-fe";
 const FEEDBACK_EMAIL = "yukyum06@gmail.com";
 
