@@ -2,24 +2,16 @@ import type { ReactNode } from "react";
 
 import { getCompetitionRate } from "@/lib/competitionRate";
 import { courseScheduleSegments } from "@/lib/courseScheduleSummary";
-import { expandCourseSchedules } from "@/lib/expandSchedules";
-import { DAY_LABELS, formatScheduleTime } from "@/lib/timeGrid";
-import type { CourseRow, ScheduleRow } from "@/lib/types";
-
-export type CourseTableMode = "segments" | "expanded";
+import type { CourseRow } from "@/lib/types";
 
 export interface CourseTableExtraColumn {
   key: string;
   header: string;
-  render: (row: { course: CourseRow; schedule: ScheduleRow | null }) => ReactNode;
+  render: (row: { course: CourseRow }) => ReactNode;
 }
 
 export interface CourseTableProps {
   courses: CourseRow[];
-  /** "segments": one row per course, schedule occurrences joined into one
-   * cell. "expanded": one row per schedule occurrence (via
-   * expandCourseSchedules) -- used by the results detail table. */
-  mode: CourseTableMode;
   /** Per-row action slot (add/remove button). Column omitted when absent. */
   renderAction?: (course: CourseRow) => ReactNode;
   /** Appended after the standard 6 columns, before 비고/action. */
@@ -32,35 +24,21 @@ export interface CourseTableProps {
 interface RowViewModel {
   key: string;
   course: CourseRow;
-  schedule: ScheduleRow | null;
   timeLabel: string;
   classroom: string;
 }
 
-function buildRows(courses: CourseRow[], mode: CourseTableMode): RowViewModel[] {
-  if (mode === "expanded") {
-    return expandCourseSchedules(courses).map(({ course, schedule }, idx) => {
-      const day = schedule?.dayOfWeek != null ? DAY_LABELS[schedule.dayOfWeek] : null;
-      const start = formatScheduleTime(schedule?.startTime ?? null);
-      const end = formatScheduleTime(schedule?.endTime ?? null);
-      const timeLabel =
-        day && start && end ? `${day} ${start}~${end}` : (schedule?.rawText ?? "시간 미정");
-      return {
-        key: `${course.id}-${idx}`,
-        course,
-        schedule,
-        timeLabel,
-        classroom: schedule?.classroom ?? "-",
-      };
-    });
-  }
-
+// 같은 과목이 여러 요일에 걸쳐 열리더라도(예: 화,금) 한 행으로 합쳐서 보여준다 --
+// 스케줄 발생 횟수만큼 행을 쪼개면 사용자 눈에는 "같은 과목이 중복 표시"되는
+// 것처럼 보인다. 요일별로 한 줄씩 내보내는 CSV/TXT export(lib/expandSchedules.ts
+// 사용)와는 의도적으로 다른 표현 방식 -- 화면 표는 사람이 훑어보는 용도라 합쳐
+// 보여주는 쪽이 더 읽기 쉽다.
+function buildRows(courses: CourseRow[]): RowViewModel[] {
   return courses.map((course) => {
     const segments = courseScheduleSegments(course);
     return {
       key: String(course.id),
       course,
-      schedule: null,
       timeLabel: segments.length > 0 ? segments.map((s) => s.timeLabel).join(" / ") : "시간 미정",
       classroom: segments.length > 0 ? segments.map((s) => s.classroom ?? "-").join(" / ") : "-",
     };
@@ -77,14 +55,13 @@ function Cell({ text, className = "max-w-[10rem]" }: { text: string; className?:
 
 export function CourseTable({
   courses,
-  mode,
   renderAction,
   extraColumns = [],
   showRemarks = false,
   emptyMessage = "표시할 과목이 없습니다.",
   className,
 }: CourseTableProps) {
-  const rows = buildRows(courses, mode);
+  const rows = buildRows(courses);
 
   return (
     <div className={`overflow-x-auto rounded-lg ${className ?? ""}`}>
@@ -124,15 +101,14 @@ export function CourseTable({
                   <Cell text={row.classroom} />
                 </td>
                 <td className="p-2 text-text-secondary">
-                  {competitionRate.rate.toFixed(2)}
-                  {competitionRate.isMock && <span className="text-neutral"> ·추정</span>}
+                  <Cell text={`${competitionRate.enrolled}/${competitionRate.capacity} (${competitionRate.rate.toFixed(2)})`} />
                 </td>
                 <td className="p-2 text-text-secondary">
                   <Cell text={row.course.professor ?? "-"} />
                 </td>
                 {extraColumns.map((col) => (
                   <td key={col.key} className="p-2 text-text-secondary">
-                    {col.render({ course: row.course, schedule: row.schedule })}
+                    {col.render({ course: row.course })}
                   </td>
                 ))}
                 {showRemarks && (

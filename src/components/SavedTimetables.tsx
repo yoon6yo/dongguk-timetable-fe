@@ -119,7 +119,7 @@ function SavedDetail({ item }: { item: SavedTimetable }) {
 
       <div className="grid gap-3 bg-background p-2 lg:grid-cols-2">
         <TimetableGrid courses={item.courses} />
-        <CourseTable courses={item.courses} mode="expanded" showRemarks />
+        <CourseTable courses={item.courses} showRemarks />
       </div>
 
       <div className="flex flex-wrap items-center gap-2 border-t border-neutral/20 pt-3">

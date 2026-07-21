@@ -5,7 +5,6 @@ export function TimetableTable({ courses }: { courses: CourseRow[] }) {
   return (
     <CourseTable
       courses={courses}
-      mode="expanded"
       showRemarks
       className="border border-neutral"
       extraColumns={[{ key: "credit", header: "학점", render: ({ course }) => course.credit }]}

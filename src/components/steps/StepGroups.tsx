@@ -272,7 +272,6 @@ function GroupCard({
         <div className="mt-2 bg-primary-tint">
           <CourseTable
             courses={group.courseIds.map((id) => courseById.get(id)).filter((c): c is CourseRow => Boolean(c))}
-            mode="segments"
             renderAction={(course) => (
               <div className="flex items-center gap-1">
                 <DragHandle groupId={group.id} courseId={course.id} courseName={course.courseName} />
@@ -469,7 +468,6 @@ function AddCourseModal({
         <div className="max-h-96 overflow-y-auto">
           <CourseTable
             courses={results}
-            mode="segments"
             showRemarks
             emptyMessage="검색 결과가 없습니다."
             extraColumns={[
