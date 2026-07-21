@@ -41,29 +41,37 @@ function seededFraction(seed: number): number {
 }
 
 // Kill switch kept for parity with how the old (wrong) `enrolled` field was
-// gated — flip to false to force mocks everywhere without touching the
-// branch logic below, if `appliedCount` ever looks wrong in production.
+// gated — flip to false to force enrolled mocks everywhere without touching
+// the branch logic below, if `appliedCount` ever looks wrong in production.
 const APPLIED_COUNT_TRUSTED = true;
 
+/**
+ * capacity and enrolled are trusted *independently* -- a course whose
+ * capacity synced fine but whose applied_count didn't (very common: BE's
+ * EdcRegi105 match rate is well under 100%, and that screen isn't even open
+ * year-round) must still show its real capacity, not throw it away for a
+ * fully-fake seeded one just because the *other* number is missing. Only
+ * the specific number that's actually unavailable gets mocked -- this was
+ * previously an all-or-nothing check, which is why real capacities were
+ * showing up as obviously-wrong mock values whenever appliedCount was null.
+ */
 export function getCompetitionRate(course: {
   id: number;
   capacity: number | null;
   appliedCount: number | null;
 }): CompetitionRate {
-  if (
-    APPLIED_COUNT_TRUSTED &&
-    course.capacity != null &&
-    course.capacity > 0 &&
-    course.appliedCount != null
-  ) {
-    const capacity = course.capacity;
-    const enrolled = course.appliedCount;
-    return { capacity, enrolled, rate: roundRate(enrolled / capacity), isMock: false };
-  }
+  const realCapacity = course.capacity != null && course.capacity > 0 ? course.capacity : null;
+  const capacity = realCapacity ?? 20 + Math.floor(seededFraction(course.id) * 40); // 20..59
 
-  const capacity = 20 + Math.floor(seededFraction(course.id) * 40); // 20..59
-  const enrolled = Math.round(capacity * (0.2 + seededFraction(course.id + 1) * 1.3)); // ~20%..150% of capacity
-  return { capacity, enrolled, rate: roundRate(enrolled / capacity), isMock: true };
+  const realEnrolled = APPLIED_COUNT_TRUSTED ? course.appliedCount : null;
+  const enrolled = realEnrolled ?? Math.round(capacity * (0.2 + seededFraction(course.id + 1) * 1.3)); // ~20%..150% of capacity
+
+  return {
+    capacity,
+    enrolled,
+    rate: roundRate(enrolled / capacity),
+    isMock: realCapacity == null || realEnrolled == null,
+  };
 }
 
 /** Two decimal places, e.g. 0.782 -> 0.78 -- matches the "0.78" style display. */

@@ -17,6 +17,18 @@ describe("getCompetitionRate", () => {
     expect(result.isMock).toBe(true);
   });
 
+  it("regression: keeps the REAL capacity even when appliedCount is missing -- must not discard a known-good capacity just because the other number is unavailable", () => {
+    const result = getCompetitionRate({ id: 1, capacity: 71, appliedCount: null });
+    expect(result.capacity).toBe(71);
+    expect(result.isMock).toBe(true); // enrolled is still mocked, just not capacity
+  });
+
+  it("regression: keeps the REAL appliedCount even when capacity is missing", () => {
+    const result = getCompetitionRate({ id: 1, capacity: null, appliedCount: 56 });
+    expect(result.enrolled).toBe(56);
+    expect(result.isMock).toBe(true); // capacity is still mocked, just not enrolled
+  });
+
   it("falls back to a mock when capacity is 0 (pre-registration snapshot)", () => {
     const result = getCompetitionRate({ id: 1, capacity: 0, appliedCount: 0 });
     expect(result.isMock).toBe(true);
