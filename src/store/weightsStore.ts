@@ -10,6 +10,9 @@ export const DEFAULT_WEIGHTS: Weights = { gap: 50, lunch: 50, freeDay: 50, timeO
 interface WeightsState {
   weights: Weights;
   setWeight: (key: keyof Weights, value: number) => void;
+  /** Replaces every weight at once -- used by the results-view preset chips
+   * (see lib/weightPresets.ts), where a single click sets all five axes. */
+  setWeights: (weights: Weights) => void;
   reset: () => void;
 }
 
@@ -37,6 +40,7 @@ export const useWeightsStore = create<WeightsState>()(
       weights: DEFAULT_WEIGHTS,
       setWeight: (key, value) =>
         set((state) => ({ weights: { ...state.weights, [key]: clamp(value) } })),
+      setWeights: (weights) => set({ weights }),
       reset: () => set({ weights: DEFAULT_WEIGHTS }),
     }),
     { name: "timetable-weights", merge: mergeWeightsState }

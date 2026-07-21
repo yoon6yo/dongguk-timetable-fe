@@ -23,6 +23,13 @@ describe("useWeightsStore", () => {
     expect(useWeightsStore.getState().weights.lunch).toBe(100);
   });
 
+  it("setWeights replaces every axis at once", () => {
+    useWeightsStore.getState().setWeight("gap", 80);
+    useWeightsStore.getState().setWeights({ gap: 0, lunch: 0, freeDay: 0, timeOfDay: 50, commute: 100 });
+
+    expect(useWeightsStore.getState().weights).toEqual({ gap: 0, lunch: 0, freeDay: 0, timeOfDay: 50, commute: 100 });
+  });
+
   it("clamps values below 0 up to 0", () => {
     useWeightsStore.getState().setWeight("freeDay", -20);
     expect(useWeightsStore.getState().weights.freeDay).toBe(0);
@@ -39,7 +46,7 @@ describe("useWeightsStore", () => {
 });
 
 describe("mergeWeightsState", () => {
-  const currentState = { weights: DEFAULT_WEIGHTS, setWeight: () => {}, reset: () => {} };
+  const currentState = { weights: DEFAULT_WEIGHTS, setWeight: () => {}, setWeights: () => {}, reset: () => {} };
 
   it("fills in a field missing from stale persisted state (e.g. commute added after the user's localStorage was saved) with its default", () => {
     const stalePersisted = { weights: { gap: 80, lunch: 20, freeDay: 60, timeOfDay: 50 } };

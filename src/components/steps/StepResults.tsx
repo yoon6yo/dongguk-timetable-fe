@@ -2,12 +2,14 @@
 
 import { useMemo, useRef, useState } from "react";
 
-import { buildGenerationInput } from "@/lib/buildGenerationInput";
+import { buildGenerationInput, type GenerationInput } from "@/lib/buildGenerationInput";
+import { rankCombinations, type ScoredCombination } from "@/lib/combinationGenerator";
 import { customEventToCourseRow } from "@/lib/customEvents";
 import { exportTimetableAsCsv } from "@/lib/exportCsv";
 import { exportElementAsPng } from "@/lib/exportImage";
 import { exportTimetableAsTxt } from "@/lib/exportTxt";
 import type { CourseRow } from "@/lib/types";
+import { matchWeightPreset, WEIGHT_PRESETS } from "@/lib/weightPresets";
 import { useCombinationWorker } from "@/hooks/useCombinationWorker";
 import { useCoursesStore } from "@/store/coursesStore";
 import { MAX_SCHOOL_CREDIT, MIN_SCHOOL_CREDIT, useCreditLimitStore } from "@/store/creditLimitStore";
@@ -28,6 +30,13 @@ import { StepWeights } from "./StepWeights";
 // fall back to a plain text row beyond that. Still clickable either way.
 const GRID_PREVIEW_LIMIT = 12;
 
+/** Stable identity for a combo, independent of its position in the ranked
+ * list -- lets the selected card survive a re-sort (preset/advanced weight
+ * change) instead of silently pointing at a different combo by index. */
+function comboKey(combo: ScoredCombination): string {
+  return combo.courseIds.join(",");
+}
+
 export function StepResults() {
   const groups = useGroupsStore((s) => s.groups);
   const removeGroup = useGroupsStore((s) => s.removeGroup);
@@ -35,14 +44,19 @@ export function StepResults() {
   const semester = useCoursesStore((s) => s.semester);
   const customEvents = useCustomEventsStore((s) => s.events);
   const weights = useWeightsStore((s) => s.weights);
+  const setWeights = useWeightsStore((s) => s.setWeights);
   const maxCredit = useCreditLimitStore((s) => s.maxCredit);
   const saveTimetable = useSavedTimetablesStore((s) => s.saveTimetable);
   const { running, result, error, run } = useCombinationWorker();
 
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [blackoutExport, setBlackoutExport] = useState(false);
-  const [weightsOpen, setWeightsOpen] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const [savedNotice, setSavedNotice] = useState(false);
+  // 검색으로 생성된 조합 집합 자체(어떤 조합이 시간 충돌 없이 유효한지)는 가중치와
+  // 무관 -- 순위만 바뀐다. 그래서 정렬 기준(프리셋/고급 설정)을 바꿀 때마다 워커를
+  // 다시 돌리지 않고, 생성 시점에 저장해둔 이 맵으로 메인 스레드에서 즉시 재정렬한다.
+  const [genMaps, setGenMaps] = useState<Pick<GenerationInput, "blocksByCourseId" | "creditByCourseId"> | null>(null);
   const prettyExportRef = useRef<HTMLDivElement>(null);
 
   const customEventCourses = useMemo(() => customEvents.map(customEventToCourseRow), [customEvents]);
@@ -55,13 +69,26 @@ export function StepResults() {
 
   const markGenerateAttempted = useWizardStore((s) => s.markGenerateAttempted);
 
+  const displayedCombinations = useMemo<ScoredCombination[]>(() => {
+    if (!result || !genMaps) return [];
+    const rawCourseIdLists = result.combinations.map((c) => c.courseIds);
+    return rankCombinations(rawCourseIdLists, genMaps.blocksByCourseId, weights, genMaps.creditByCourseId);
+  }, [result, genMaps, weights]);
+
+  const activePresetKey = matchWeightPreset(weights);
+
   function handleGenerate() {
     markGenerateAttempted();
     // 빈 그룹은 조합 생성에 아무 기여도 못 하고 혼란만 주므로, 생성 시점에 자동으로 정리한다.
     const emptyGroupIds = groups.filter((g) => g.courseIds.length === 0).map((g) => g.id);
     emptyGroupIds.forEach(removeGroup);
     const remainingGroups = groups.filter((g) => g.courseIds.length > 0);
-    const { groups: generatorGroups } = buildGenerationInput(remainingGroups, courses, customEventCourses);
+    const { groups: generatorGroups, blocksByCourseId, creditByCourseId } = buildGenerationInput(
+      remainingGroups,
+      courses,
+      customEventCourses
+    );
+    setGenMaps({ blocksByCourseId, creditByCourseId });
     run({
       groups: generatorGroups,
       weights,
@@ -69,7 +96,7 @@ export function StepResults() {
       minCredit: MIN_SCHOOL_CREDIT,
       maxResults: 200,
     });
-    setSelectedIndex(null);
+    setSelectedKey(null);
   }
 
   async function handleExportPng() {
@@ -99,7 +126,7 @@ export function StepResults() {
     setTimeout(() => setSavedNotice(false), 2000);
   }
 
-  const selected = selectedIndex != null ? result?.combinations[selectedIndex] : undefined;
+  const selected = selectedKey != null ? displayedCombinations.find((c) => comboKey(c) === selectedKey) : undefined;
   const selectedCourses: CourseRow[] = selected
     ? selected.courseIds.map((id) => courseById.get(id)).filter((c): c is CourseRow => Boolean(c))
     : [];
@@ -110,58 +137,81 @@ export function StepResults() {
         <p className="text-sm text-text-secondary">그룹과 과목을 먼저 담아야 조합을 생성할 수 있습니다.</p>
       )}
 
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={handleGenerate}
-          disabled={running || groups.length === 0}
-          className="rounded-full bg-primary px-6 py-2 text-sm font-semibold text-white shadow-button transition-all duration-150 hover:bg-primary-hover active:scale-95 active:bg-primary-active active:shadow-none disabled:scale-100 disabled:bg-neutral/30 disabled:text-text-secondary disabled:shadow-none"
-        >
-          {running ? "생성 중..." : "시간표 조합 생성하기"}
-        </button>
-        <button
-          type="button"
-          onClick={() => setWeightsOpen(true)}
-          className="rounded-full border border-neutral px-4 py-2 text-sm font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
-        >
-          가중치 조정
-        </button>
-      </div>
-
-      {weightsOpen && (
-        <Modal title="우선순위(가중치) 조정" onClose={() => setWeightsOpen(false)}>
-          <StepWeights />
-        </Modal>
-      )}
+      <button
+        type="button"
+        onClick={handleGenerate}
+        disabled={running || groups.length === 0}
+        className="rounded-full bg-primary px-6 py-2 text-sm font-semibold text-white shadow-button transition-all duration-150 hover:bg-primary-hover active:scale-95 active:bg-primary-active active:shadow-none disabled:scale-100 disabled:bg-neutral/30 disabled:text-text-secondary disabled:shadow-none"
+      >
+        {running ? "생성 중..." : "시간표 조합 생성하기"}
+      </button>
 
       {error && <p className="text-sm text-error">{error}</p>}
 
       {result && (
         <>
+          <div className="space-y-1.5 rounded-xl bg-surface p-3 shadow-card">
+            <p className="text-sm font-medium">정렬 기준</p>
+            <div className="flex flex-wrap gap-1.5">
+              {WEIGHT_PRESETS.map((preset) => (
+                <button
+                  key={preset.key}
+                  type="button"
+                  onClick={() => setWeights(preset.weights)}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold transition-all duration-150 active:scale-95 ${
+                    activePresetKey === preset.key
+                      ? "bg-primary text-white"
+                      : "bg-neutral/20 text-text-secondary hover:bg-neutral/30"
+                  }`}
+                >
+                  {preset.label}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setAdvancedOpen(true)}
+                className={`rounded-full px-3 py-1 text-xs font-semibold transition-all duration-150 active:scale-95 ${
+                  activePresetKey === null
+                    ? "bg-primary text-white"
+                    : "border border-neutral text-text-secondary hover:border-primary hover:text-primary"
+                }`}
+              >
+                {activePresetKey === null ? "사용자 지정" : "고급 설정"}
+              </button>
+            </div>
+          </div>
+
+          {advancedOpen && (
+            <Modal title="고급 설정 — 세부 기준 직접 조정" onClose={() => setAdvancedOpen(false)}>
+              <StepWeights />
+            </Modal>
+          )}
+
           {result.capped && (
             <p className="text-xs text-text-secondary">
-              후보가 많아 일부만 탐색했습니다 — 상위 {result.combinations.length}개를 보여드립니다.
+              후보가 많아 일부만 탐색했습니다 — 상위 {displayedCombinations.length}개를 보여드립니다.
             </p>
           )}
-          <p className="text-sm text-text-secondary">{result.combinations.length}개의 시간표 조합을 찾았습니다.</p>
-          {result.combinations.length === 0 && (
+          <p className="text-sm text-text-secondary">{displayedCombinations.length}개의 시간표 조합을 찾았습니다.</p>
+          {displayedCombinations.length === 0 && (
             <p className="text-xs text-text-secondary">
               시간 충돌이 없는 조합이 없거나, 선택한 과목들의 학점 합이 {MIN_SCHOOL_CREDIT}~{MAX_SCHOOL_CREDIT}학점
-              범위를 벗어났을 수 있어요. 우선순위 단계에서 목표 학점을 확인하거나 과목을 더 담아보세요.
+              범위를 벗어났을 수 있어요. 그룹 구성이나 담은 과목을 확인해보세요.
             </p>
           )}
 
           <ul className="grid gap-2 sm:grid-cols-2">
-            {result.combinations.map((combo, idx) => {
+            {displayedCombinations.map((combo, idx) => {
               const comboCourses = combo.courseIds
                 .map((id) => courseById.get(id))
                 .filter((c): c is CourseRow => Boolean(c));
-              const isSelected = selectedIndex === idx;
+              const key = comboKey(combo);
+              const isSelected = selectedKey === key;
               return (
-                <li key={idx} className={idx >= GRID_PREVIEW_LIMIT ? "sm:col-span-2" : undefined}>
+                <li key={key} className={idx >= GRID_PREVIEW_LIMIT ? "sm:col-span-2" : undefined}>
                   <button
                     type="button"
-                    onClick={() => setSelectedIndex(idx)}
+                    onClick={() => setSelectedKey(key)}
                     className={`w-full rounded-xl p-3 text-left text-sm shadow-card transition-all duration-150 hover:shadow-card-hover active:scale-[0.99] ${
                       isSelected ? "bg-primary-tint ring-2 ring-primary" : "bg-surface"
                     }`}

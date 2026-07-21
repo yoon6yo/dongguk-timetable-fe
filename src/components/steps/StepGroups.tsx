@@ -1,7 +1,7 @@
 "use client";
 
 import { DndContext, KeyboardSensor, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 
 import { listColleges, listCourseTypes, listDepartments, searchCourses, type CourseSortOption } from "@/lib/courseSearch";
 import { computeCreditRangeWarning, type CreditRangeWarning } from "@/lib/creditRangeWarning";
@@ -42,6 +42,13 @@ export function StepGroups() {
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor)
   );
+
+  // "+ 그룹 추가"를 누르지 않아도 최소 1개 그룹은 항상 있어야 한다는 요구사항 —
+  // 최초 진입뿐 아니라 마지막 그룹을 삭제했거나 학기 불일치로 초기화된 직후에도
+  // 다시 빈 그룹 하나가 채워지도록 groups.length만 감시한다.
+  useEffect(() => {
+    if (groups.length === 0) addGroup();
+  }, [groups.length, addGroup]);
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
