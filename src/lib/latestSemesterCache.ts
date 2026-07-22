@@ -15,10 +15,10 @@ export interface LatestSemesterCacheEntry {
   etag: string;
 }
 
-// The scribe crawler updates MySQL at most once a day — there's no need for
-// every visitor's page load to hit the DB fresh. 5 minutes just absorbs
-// traffic bursts; the ETag below is what actually saves bandwidth on top of
-// that (see route handlers), by letting an unchanged client skip the body.
+// The scribe crawler updates MySQL hourly — there's no need for every
+// visitor's page load to hit the DB fresh. 5 minutes just absorbs traffic
+// bursts; the ETag below is what actually saves bandwidth on top of that
+// (see route handlers), by letting an unchanged client skip the body.
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
 const cache = createTtlCache<LatestSemesterCacheEntry>(CACHE_TTL_MS, async () => {

@@ -5,8 +5,8 @@ import { getLatestSemesterCacheEntry } from "@/lib/latestSemesterCache";
  * filtering, and combination generation all happen client-side (see project
  * plan section 4), so there is deliberately no query-string filtering here.
  *
- * Backed by a 5-minute server-side TTL cache (the crawler only updates MySQL
- * once a day) plus an ETag: a client re-fetching on page refresh sends
+ * Backed by a 5-minute server-side TTL cache (the crawler updates MySQL
+ * hourly) plus an ETag: a client re-fetching on page refresh sends
  * If-None-Match and gets a bodyless 304 when nothing changed, instead of
  * re-downloading the whole catalog every time.
  */
