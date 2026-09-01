@@ -113,4 +113,27 @@ describe("buildTimetableCsv", () => {
     const lines = csv.split("\r\n");
     expect(lines).toHaveLength(1); // header only
   });
+
+  it.each(["=1+1", "+1+1", "-1+1", "@SUM(A1)"])(
+    "neutralizes a formula-injection-shaped course name (%s) with a leading quote",
+    (dangerous) => {
+      const csv = buildTimetableCsv([makeCourse({ courseName: dangerous })]);
+      expect(csv).toContain(`'${dangerous},`);
+    }
+  );
+
+  it("neutralizes a formula-shaped name that also needs CSV quoting (commas/quotes)", () => {
+    const dangerous = '=HYPERLINK("http://evil","click")';
+    const csv = buildTimetableCsv([makeCourse({ courseName: dangerous })]);
+    const firstDataLine = csv.split("\r\n")[1];
+    // CSV-unescape the first (quoted) field back to its raw value.
+    const firstField = firstDataLine.slice(1, firstDataLine.indexOf('",') + 1).replace(/""/g, '"');
+    expect(firstField.startsWith("'=")).toBe(true);
+  });
+
+  it("leaves an ordinary course name starting with a Korean/alphanumeric character untouched", () => {
+    const csv = buildTimetableCsv([makeCourse({ courseName: "자료구조" })]);
+    expect(csv).toContain("자료구조,");
+    expect(csv).not.toContain("'자료구조");
+  });
 });

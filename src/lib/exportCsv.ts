@@ -9,6 +9,14 @@ function escapeCsvField(value: string): string {
   return /[",\r\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
 }
 
+/** Course name/professor/classroom/time text is raw scraped nDRIMS text, not
+ * user-attacker-controlled, but it's also never sanitized by a human before
+ * it ends up in a spreadsheet cell -- prefix a leading `=`/`+`/`-`/`@` with a
+ * quote so Excel/Sheets never interprets a course row as a formula. */
+function neutralizeCsvFormula(value: string): string {
+  return /^[=+\-@]/.test(value) ? `'${value}` : value;
+}
+
 /**
  * One row per schedule occurrence (a course meeting twice a week produces two
  * rows), matching how TimetableTable already displays the same combination —
@@ -25,7 +33,12 @@ export function buildTimetableCsv(courses: CourseRow[]): string {
 
   // Leading BOM so Excel (Korean locale in particular) reads the UTF-8 text
   // correctly instead of mangling it as the system codepage.
-  return "\uFEFF" + [HEADER, ...rows].map((row) => row.map(escapeCsvField).join(",")).join("\r\n");
+  return (
+    "\uFEFF" +
+    [HEADER, ...rows]
+      .map((row) => row.map((cell) => escapeCsvField(neutralizeCsvFormula(String(cell)))).join(","))
+      .join("\r\n")
+  );
 }
 
 /** Client-only: triggers a browser download, must only run from an event handler. */
