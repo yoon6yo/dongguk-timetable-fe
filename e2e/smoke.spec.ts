@@ -88,7 +88,11 @@ test.describe("watchlist", () => {
     const searchInput = page.getByPlaceholder("과목명 / 학수번호 / 교수명 검색");
     await searchInput.fill("공학");
     await page.waitForTimeout(400);
-    const resultRows = page.locator("table tbody tr");
+    // Two <table>s on this page: "담은 관심 강의" (empty on a fresh context,
+    // but still renders an empty-message row) and the search results below
+    // it -- scope to the last table so `.first()` row is an actual result,
+    // not the first table's empty-state row.
+    const resultRows = page.locator("table").last().locator("tbody tr");
     await expect(resultRows.first()).toBeVisible({ timeout: 5000 });
 
     // A fresh browser context has no groups yet, so this is the "만들기"
