@@ -32,7 +32,7 @@ export function SavedTimetables() {
   const selected = saved.find((s) => s.id === selectedId) ?? null;
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col px-4 py-8">
+    <div className="mx-auto flex max-w-4xl flex-col px-4 py-6">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-xl font-bold">저장된 시간표</h1>
         <div className="flex gap-3 text-sm font-medium">
@@ -52,7 +52,7 @@ export function SavedTimetables() {
         </p>
       )}
 
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {saved.map((item) => (
           <SavedCard
             key={item.id}
@@ -83,7 +83,7 @@ function SavedCard({
 
   return (
     <div
-      className={`rounded-xl p-3 shadow-card transition-all duration-150 hover:shadow-card-hover ${
+      className={`rounded-lg p-3 shadow-card transition-all duration-150 hover:shadow-card-hover ${
         isSelected ? "bg-primary-tint ring-2 ring-primary" : "bg-surface"
       }`}
     >
@@ -130,7 +130,7 @@ function SavedDetail({ item }: { item: SavedTimetable }) {
   }
 
   return (
-    <div className="mt-4 space-y-3 rounded-xl bg-surface p-3 shadow-card">
+    <div className="mt-4 space-y-3 rounded-lg bg-surface p-3 shadow-card">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">저장된 시간표</h3>
         <p className="text-xs text-text-secondary">

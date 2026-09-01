@@ -26,7 +26,7 @@ export function StepStart() {
       )}
 
       {status === "loaded" && semester && (
-        <div className="rounded-xl border border-primary/30 bg-primary-tint p-4 shadow-card">
+        <div className="rounded-lg border border-primary/30 bg-primary-tint p-4 shadow-card">
           <p className="text-sm text-text-secondary">최신 학기</p>
           <p className="text-lg font-semibold">{semester.label}</p>
         </div>

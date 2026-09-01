@@ -15,7 +15,7 @@ const FEATURES: { href: string; title: string; description: string }[] = [
 
 export function Landing() {
   return (
-    <div className="mx-auto flex max-w-2xl flex-col px-4 py-16 text-center">
+    <div className="mx-auto flex max-w-2xl flex-col px-4 py-10 text-center">
       <h1 className="text-2xl font-bold">동국대 시간표 마법사</h1>
       <p className="mt-2 text-sm text-text-secondary">
         그룹을 만들고 과목을 담으면, 충돌 없는 시간표 조합을 자동으로 찾아드립니다.
@@ -28,12 +28,12 @@ export function Landing() {
         시간표 만들기 시작
       </Link>
 
-      <div className="mt-10 grid gap-3 text-left sm:grid-cols-2">
+      <div className="mt-6 grid gap-3 text-left sm:grid-cols-2">
         {FEATURES.map((feature) => (
           <Link
             key={feature.href}
             href={feature.href}
-            className="block rounded-xl bg-surface p-4 shadow-card transition-all duration-150 hover:shadow-card-hover active:scale-[0.98]"
+            className="block rounded-lg bg-surface p-4 shadow-card transition-all duration-150 hover:shadow-card-hover active:scale-[0.98]"
           >
             <h2 className="text-sm font-semibold">{feature.title}</h2>
             <p className="mt-1 text-xs text-text-secondary">{feature.description}</p>

@@ -66,7 +66,7 @@ export function Watchlist() {
   const results = allResults.slice(0, SEARCH_RESULT_LIMIT);
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col px-4 py-8">
+    <div className="mx-auto flex max-w-4xl flex-col px-4 py-6">
       <div className="mb-2 flex items-center justify-between">
         <h1 className="text-xl font-bold">관심 강의 경쟁률</h1>
         <div className="flex gap-3 text-sm font-medium">
@@ -94,7 +94,7 @@ export function Watchlist() {
 
       {status === "loaded" && (
         <>
-          <div className="mt-4 rounded-xl bg-surface p-3 shadow-card">
+          <div className="mt-4 rounded-lg bg-surface p-3 shadow-card">
             <h2 className="text-sm font-semibold">담은 관심 강의</h2>
             <div className="mt-2">
               <CourseTable

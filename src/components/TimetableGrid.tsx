@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 import { timeToMinutes } from "@/lib/conflict";
 import { courseBackgroundColor, courseTextColor } from "@/lib/courseColor";
 import { activeDayColumns, computeGridLayout, DAY_LABELS, rowRange } from "@/lib/timeGrid";
@@ -50,7 +52,13 @@ function formatHourLabel(minutes: number): string {
   return `${Math.floor(minutes / 60)}:00`;
 }
 
-export function TimetableGrid({
+// Memoized: StepResults can render up to ~200 of these at once (one per
+// candidate combo). Without this, selecting a card or toggling an unrelated
+// bit of state re-runs splitBlocks/computeGridLayout and reconciles every
+// grid's DOM on every render, not just the one that actually changed. Pairs
+// with StepResults passing a stable `courses` array reference per combo --
+// memo alone doesn't help if the caller hands in a fresh array each render.
+export const TimetableGrid = memo(function TimetableGrid({
   courses,
   compact = false,
   blackout = false,
@@ -76,7 +84,7 @@ export function TimetableGrid({
       {/* Grid columns use a fixed minWidth (not just 1fr) so on narrow viewports
           the day columns stay legible and the container scrolls horizontally
           instead of squeezing every column unreadably thin. */}
-      <div className="overflow-x-auto rounded-xl border border-neutral/30 bg-background">
+      <div className="overflow-x-auto rounded-lg border border-neutral/30 bg-background">
         <div
           className={compact ? "grid text-[10px]" : "grid text-sm"}
           style={{
@@ -101,7 +109,7 @@ export function TimetableGrid({
             return (
               <div
                 key={`time-${rowIdx}`}
-                className="flex items-start justify-end border-r border-neutral/30 pr-1 text-[11px] text-text-secondary"
+                className="flex items-start justify-end border-r border-neutral/30 pr-1 text-[11px] tabular-nums text-text-secondary"
                 style={{ gridColumn: 1, gridRow: rowIdx + 2 }}
               >
                 {minutes % 60 === 0 ? formatHourLabel(minutes) : ""}
@@ -176,4 +184,4 @@ export function TimetableGrid({
       )}
     </div>
   );
-}
+});

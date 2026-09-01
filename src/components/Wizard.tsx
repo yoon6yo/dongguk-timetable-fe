@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 
 import { useSemesterMismatchGuard } from "@/hooks/useSemesterMismatchGuard";
@@ -7,9 +8,14 @@ import { formatSyncTime } from "@/lib/formatSyncTime";
 import { useCoursesStore } from "@/store/coursesStore";
 import { useWizardStore, WIZARD_STEPS } from "@/store/wizardStore";
 
-import { StepGroups } from "./steps/StepGroups";
-import { StepResults } from "./steps/StepResults";
 import { StepStart } from "./steps/StepStart";
+
+// Code-split, not a static import: StepGroups pulls in @dnd-kit/core and
+// StepResults pulls in html-to-image (via lib/exportImage.ts), neither
+// needed until the user actually reaches those steps -- a static import
+// here would ship both in step "start"'s initial JS.
+const StepGroups = dynamic(() => import("./steps/StepGroups").then((m) => m.StepGroups), { ssr: false });
+const StepResults = dynamic(() => import("./steps/StepResults").then((m) => m.StepResults), { ssr: false });
 
 const STEP_TITLES: Record<(typeof WIZARD_STEPS)[number], string> = {
   start: "시작",
@@ -36,7 +42,7 @@ export function Wizard() {
   const StepComponent = STEP_COMPONENTS[stepKey];
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col px-4 py-8">
+    <div className="mx-auto flex max-w-4xl flex-col px-4 py-6">
       <div className="sticky top-0 z-10 -mx-4 bg-background px-4 pb-2">
         <div className="flex items-center justify-between gap-3 pt-1">
           <Link href="/" className="text-xs font-medium text-text-secondary hover:text-primary">

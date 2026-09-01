@@ -39,3 +39,17 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# playwright (e2e/ and playwright.config.ts themselves ARE committed — only
+# run output is ignored)
+/test-results/
+/playwright-report/
+/blob-report/
+
+# oh-my-design / oh-my-claudecode session state — DESIGN.md is a working
+# scratch artifact for this project, not a committed doc (same treatment as
+# dongguk-timetable-be's STATUS.md)
+DESIGN.md
+DESIGN_DEPRECATED.md
+.omd/
+.omc/

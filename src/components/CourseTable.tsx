@@ -175,16 +175,16 @@ export function CourseTable({
                 <td className="px-2 py-1 font-medium">
                   <Cell text={row.course.courseName} />
                 </td>
-                <td className="px-2 py-1 text-text-secondary">
+                <td className="px-2 py-1 text-text-secondary tabular-nums">
                   <Cell text={`${row.course.courseNo}-${row.course.classNo}`} />
                 </td>
-                <td className="px-2 py-1 text-text-secondary">
+                <td className="px-2 py-1 text-text-secondary tabular-nums">
                   <Cell text={row.timeLabel} className="max-w-[12rem]" />
                 </td>
                 <td className="px-2 py-1 text-text-secondary">
                   <Cell text={row.classroom} />
                 </td>
-                <td className="px-2 py-1 text-text-secondary">
+                <td className="px-2 py-1 text-text-secondary tabular-nums">
                   <span
                     className="block truncate"
                     title={

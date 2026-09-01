@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { memo, useCallback, useMemo, useRef, useState } from "react";
 
 import { buildGenerationInput, type GenerationInput } from "@/lib/buildGenerationInput";
 import { rankCombinations, type ScoredCombination } from "@/lib/combinationGenerator";
@@ -32,6 +32,54 @@ import { StepWeights } from "./StepWeights";
 function comboKey(combo: ScoredCombination): string {
   return combo.courseIds.join(",");
 }
+
+/** One result card. Memoized so selecting a card (or any other unrelated
+ * StepResults state change) only re-renders the ≤2 cards whose `isSelected`
+ * actually flipped, not all ≤200 — `comboCourses` is derived here (not in
+ * the parent's .map()) so it's a stable reference across renders where
+ * `combo`/`courseById` are unchanged, letting TimetableGrid's own memo bail
+ * out too. */
+const ComboCard = memo(function ComboCard({
+  combo,
+  idx,
+  courseById,
+  isSelected,
+  onSelect,
+}: {
+  combo: ScoredCombination;
+  idx: number;
+  courseById: Map<string, CourseRow>;
+  isSelected: boolean;
+  onSelect: (key: string) => void;
+}) {
+  const comboCourses = useMemo(
+    () => combo.courseIds.map((id) => courseById.get(id)).filter((c): c is CourseRow => Boolean(c)),
+    [combo, courseById]
+  );
+  const key = comboKey(combo);
+
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={() => onSelect(key)}
+        className={`w-full rounded-lg p-3 text-left text-sm shadow-card transition-all duration-150 hover:shadow-card-hover active:scale-[0.99] ${
+          isSelected ? "bg-primary-tint ring-2 ring-primary" : "bg-surface"
+        }`}
+      >
+        <div className="flex items-center justify-between">
+          <span className="font-semibold">#{idx + 1}</span>
+          <span className="text-text-secondary">
+            {combo.totalCredit}학점 · 점수 {combo.score.total.toFixed(1)}
+          </span>
+        </div>
+        <div className="mt-2">
+          <TimetableGrid courses={comboCourses} compact />
+        </div>
+      </button>
+    </li>
+  );
+});
 
 export function StepResults() {
   const groups = useGroupsStore((s) => s.groups);
@@ -73,6 +121,8 @@ export function StepResults() {
   }, [result, genMaps, weights]);
 
   const activePresetKey = matchWeightPreset(weights);
+
+  const handleSelectCombo = useCallback((key: string) => setSelectedKey(key), []);
 
   function handleGenerate() {
     markGenerateAttempted();
@@ -160,7 +210,7 @@ export function StepResults() {
 
       {result && (
         <>
-          <div className="space-y-1.5 rounded-xl bg-surface p-3 shadow-card">
+          <div className="space-y-1.5 rounded-lg bg-surface p-3 shadow-card">
             <p className="text-sm font-medium">정렬 기준</p>
             <div className="flex flex-wrap gap-1.5">
               {WEIGHT_PRESETS.map((preset) => (
@@ -210,39 +260,21 @@ export function StepResults() {
             </p>
           )}
 
-          <ul className="grid gap-2 sm:grid-cols-2">
-            {displayedCombinations.map((combo, idx) => {
-              const comboCourses = combo.courseIds
-                .map((id) => courseById.get(id))
-                .filter((c): c is CourseRow => Boolean(c));
-              const key = comboKey(combo);
-              const isSelected = selectedKey === key;
-              return (
-                <li key={key}>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedKey(key)}
-                    className={`w-full rounded-xl p-3 text-left text-sm shadow-card transition-all duration-150 hover:shadow-card-hover active:scale-[0.99] ${
-                      isSelected ? "bg-primary-tint ring-2 ring-primary" : "bg-surface"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold">#{idx + 1}</span>
-                      <span className="text-text-secondary">
-                        {combo.totalCredit}학점 · 점수 {combo.score.total.toFixed(1)}
-                      </span>
-                    </div>
-                    <div className="mt-2">
-                      <TimetableGrid courses={comboCourses} compact />
-                    </div>
-                  </button>
-                </li>
-              );
-            })}
+          <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {displayedCombinations.map((combo, idx) => (
+              <ComboCard
+                key={comboKey(combo)}
+                combo={combo}
+                idx={idx}
+                courseById={courseById}
+                isSelected={selectedKey === comboKey(combo)}
+                onSelect={handleSelectCombo}
+              />
+            ))}
           </ul>
 
           {selected && (
-            <div className="space-y-3 rounded-xl bg-surface p-3 shadow-card">
+            <div className="space-y-3 rounded-lg bg-surface p-3 shadow-card">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold">선택한 시간표</h3>
                 <p className="text-xs text-text-secondary">

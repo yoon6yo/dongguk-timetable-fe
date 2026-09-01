@@ -100,7 +100,7 @@ function CustomEventsSection() {
   const [addOpen, setAddOpen] = useState(false);
 
   return (
-    <div className="rounded-xl bg-surface p-3 shadow-card">
+    <div className="rounded-lg bg-surface p-3 shadow-card">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold">개인 일정</h2>
         <button
@@ -232,7 +232,7 @@ function GroupCard({
   return (
     <div
       ref={setNodeRef}
-      className={`rounded-xl bg-surface p-3 shadow-card transition-shadow hover:shadow-card-hover ${
+      className={`rounded-lg bg-surface p-3 shadow-card transition-shadow hover:shadow-card-hover ${
         isOver ? "ring-2 ring-primary" : ""
       }`}
     >
