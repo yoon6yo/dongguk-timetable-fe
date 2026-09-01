@@ -58,6 +58,16 @@ test.describe("wizard", () => {
       await page.waitForTimeout(400);
       const resultRows = page.locator("table tbody tr");
       await expect(resultRows.first()).toBeVisible({ timeout: 5000 });
+
+      // CourseSearchPanel merge: each result row must offer both the
+      // group-add action (담기) and a watchlist toggle (★), not just the
+      // group action — this is the "search UI duplication" fix, verified
+      // end-to-end rather than just at the component level (no component
+      // test tier exists in this repo; see watchlistStore.test.ts for the
+      // store-level half of this feature's coverage).
+      const firstRow = resultRows.first();
+      await expect(firstRow.getByRole("button", { name: "담기" })).toBeVisible();
+      await expect(firstRow.getByRole("button", { name: /관심목록/ })).toBeVisible();
     }
   });
 });
@@ -66,6 +76,28 @@ test.describe("watchlist", () => {
   test("loads without an existing wizard session", async ({ page }) => {
     await page.goto("/watchlist");
     await expect(page.getByRole("heading", { name: /관심 강의/ })).toBeVisible();
+  });
+
+  test("search results offer adding straight to a group, not just the watchlist", async ({ page }) => {
+    await page.goto("/watchlist");
+    await expect(page.getByText("최신 학기 강의 정보를 불러오는 중...")).toBeHidden({ timeout: 15000 });
+    if (await page.getByText("강의 정보를 불러오지 못했습니다").isVisible().catch(() => false)) {
+      test.skip(true, "no semester data loaded on this environment");
+    }
+
+    const searchInput = page.getByPlaceholder("과목명 / 학수번호 / 교수명 검색");
+    await searchInput.fill("공학");
+    await page.waitForTimeout(400);
+    const resultRows = page.locator("table tbody tr");
+    await expect(resultRows.first()).toBeVisible({ timeout: 5000 });
+
+    // A fresh browser context has no groups yet, so this is the "만들기"
+    // fallback rather than the group <select> -- both are the same feature
+    // (reach the group-adding action without leaving /watchlist), just
+    // different states of it.
+    const firstRow = resultRows.first();
+    await expect(firstRow.getByRole("button", { name: /관심목록/ })).toBeVisible();
+    await expect(firstRow.getByRole("link", { name: "그룹 없음 · 만들기" })).toHaveAttribute("href", "/wizard");
   });
 });
 

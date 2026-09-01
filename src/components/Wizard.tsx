@@ -44,18 +44,14 @@ export function Wizard() {
   return (
     <div className="mx-auto flex max-w-4xl flex-col px-4 py-6">
       <div className="sticky top-0 z-10 -mx-4 bg-background px-4 pb-2">
-        <div className="flex items-center justify-between gap-3 pt-1">
+        {/* watchlist/saved links deliberately removed from this step-flow nav --
+            they're one exit link away via 홈, and both are now reachable
+            without leaving the wizard anyway (group search can add straight
+            to the watchlist; see CourseSearchPanel usage in StepGroups). */}
+        <div className="flex items-center pt-1">
           <Link href="/" className="text-xs font-medium text-text-secondary hover:text-primary">
             ← 홈
           </Link>
-          <div className="flex gap-3">
-            <Link href="/watchlist" className="text-xs font-medium text-primary hover:text-primary-hover">
-              관심 강의 경쟁률
-            </Link>
-            <Link href="/saved" className="text-xs font-medium text-primary hover:text-primary-hover">
-              저장된 시간표
-            </Link>
-          </div>
         </div>
         <ol
           className="mb-8 grid grid-flow-col items-start"

@@ -3,18 +3,17 @@
 import { DndContext, DragOverlay, KeyboardSensor, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 
-import { listColleges, listCourseTypes, listDepartments, searchCourses, type CourseSortOption } from "@/lib/courseSearch";
 import { courseScheduleSegments } from "@/lib/courseScheduleSummary";
 import { DAY_LABELS } from "@/lib/timeGrid";
 import type { CourseRow } from "@/lib/types";
 import { useCoursesStore } from "@/store/coursesStore";
 import { useCustomEventsStore } from "@/store/customEventsStore";
 import { groupDisplayName, useGroupsStore, type CourseGroup } from "@/store/groupsStore";
+import { useWatchlistStore } from "@/store/watchlistStore";
 
+import { CourseSearchPanel } from "../CourseSearchPanel";
 import { CourseTable } from "../CourseTable";
 import { Modal } from "../Modal";
-
-const SEARCH_RESULT_LIMIT = 50;
 
 interface DragData {
   courseId: number;
@@ -370,142 +369,44 @@ function AddCourseModal({
 }) {
   const addCourseToGroup = useGroupsStore((s) => s.addCourseToGroup);
   const semesterCode = useCoursesStore((s) => s.semester)?.semesterCode;
-  const [college, setCollege] = useState("");
-  const [department, setDepartment] = useState("");
-  const [courseType, setCourseType] = useState("");
-  const [dayOfWeek, setDayOfWeek] = useState("");
-  const [sort, setSort] = useState<CourseSortOption>("default");
-  const [queryInput, setQueryInput] = useState("");
-  // 한글은 IME가 자모를 조합하는 도중에도 onChange가 계속 발생하므로, 별도
-  // 처리 없이 그때그때의 입력값을 그대로 검색어로 써도 된다 -- 조합 중인 음절은
-  // 아직 courseName 등에 없는 문자열이라 자연히 매칭되지 않다가, 음절이
-  // 완성되는 순간부터 자동으로 결과가 나타난다. (이전에는 "조합 중엔 마지막
-  // 글자 무시" 방식을 썼는데, 여러 글자를 빠르게 입력할 때 필요한 글자까지
-  // 함께 잘려나가 검색이 아예 안 되는 것처럼 보이는 회귀가 있었다.)
-  const query = queryInput;
-
-  const colleges = useMemo(() => listColleges(courses), [courses]);
-  const departments = useMemo(() => listDepartments(courses, college || undefined), [courses, college]);
-  const courseTypes = useMemo(() => listCourseTypes(courses), [courses]);
-  const allResults = useMemo(
-    () =>
-      searchCourses(courses, {
-        college: college || undefined,
-        department: department || undefined,
-        courseType: courseType || undefined,
-        dayOfWeek: dayOfWeek ? Number(dayOfWeek) : undefined,
-        sort,
-        query,
-      }),
-    [courses, college, department, courseType, dayOfWeek, sort, query]
-  );
-  const results = allResults.slice(0, SEARCH_RESULT_LIMIT);
+  const watchedIds = useWatchlistStore((s) => s.courseIds);
+  const addWatchCourse = useWatchlistStore((s) => s.addCourse);
+  const removeWatchCourse = useWatchlistStore((s) => s.removeCourse);
 
   return (
     <Modal title={`"${displayName}"에 과목 추가`} onClose={onClose}>
-      <div className="space-y-2">
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <select
-            value={college}
-            onChange={(e) => {
-              setCollege(e.target.value);
-              setDepartment("");
-            }}
-            className="rounded-lg border border-neutral px-2 py-1.5 text-xs"
-          >
-            <option value="">전체 단과대</option>
-            {colleges.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-          <select
-            value={department}
-            onChange={(e) => setDepartment(e.target.value)}
-            className="rounded-lg border border-neutral px-2 py-1.5 text-xs"
-          >
-            <option value="">전체 학과</option>
-            {departments.map((d) => (
-              <option key={d} value={d}>
-                {d}
-              </option>
-            ))}
-          </select>
-          <select
-            value={courseType}
-            onChange={(e) => setCourseType(e.target.value)}
-            className="rounded-lg border border-neutral px-2 py-1.5 text-xs"
-          >
-            <option value="">전체 영역구분</option>
-            {courseTypes.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-          <select
-            value={dayOfWeek}
-            onChange={(e) => setDayOfWeek(e.target.value)}
-            className="rounded-lg border border-neutral px-2 py-1.5 text-xs"
-          >
-            <option value="">전체 요일</option>
-            {Object.entries(DAY_LABELS).map(([day, label]) => (
-              <option key={day} value={day}>
-                {label}요일
-              </option>
-            ))}
-          </select>
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value as CourseSortOption)}
-            className="rounded-lg border border-neutral px-2 py-1.5 text-xs"
-          >
-            <option value="default">기본 순서</option>
-            <option value="competition">경쟁률순</option>
-            <option value="credit">학점순</option>
-          </select>
-        </div>
-
-        <input
-          type="text"
-          value={queryInput}
-          onChange={(e) => setQueryInput(e.target.value)}
-          placeholder="과목명 / 학수번호 / 교수명 검색"
-          autoFocus
-          className="w-full rounded-lg border border-neutral px-2 py-1.5 text-xs outline-none focus:border-primary"
-        />
-
-        {allResults.length > SEARCH_RESULT_LIMIT && (
-          <p className="text-[11px] text-text-secondary">
-            검색 결과가 많아 상위 {SEARCH_RESULT_LIMIT}개만 보여드려요 — 검색어나 단과대/학과로 좁혀보세요.
-          </p>
-        )}
-
-        <div className="max-h-96 overflow-y-auto">
-          <CourseTable
-            courses={results}
-            showRemarks
-            emptyMessage="검색 결과가 없습니다."
-            extraColumns={[
-              { key: "dept", header: "학과", render: ({ course }) => course.department ?? course.college },
-            ]}
-            renderAction={(course) => {
-              const alreadyAdded = group.courseIds.includes(course.id);
-              return (
-                <button
-                  type="button"
-                  disabled={alreadyAdded}
-                  onClick={() => addCourseToGroup(group.id, course.id, semesterCode)}
-                  className="shrink-0 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white shadow-button transition-all duration-150 hover:bg-primary-hover active:scale-95 active:bg-primary-active active:shadow-none disabled:scale-100 disabled:bg-neutral/30 disabled:text-text-secondary disabled:shadow-none"
-                >
-                  {alreadyAdded ? "담김" : "담기"}
-                </button>
-              );
-            }}
-          />
-        </div>
-      </div>
+      <CourseSearchPanel
+        courses={courses}
+        defaultSort="default"
+        resultsMaxHeightClassName="max-h-96"
+        renderAction={(course) => {
+          const alreadyAdded = group.courseIds.includes(course.id);
+          const watched = watchedIds.includes(course.id);
+          return (
+            <div className="flex shrink-0 items-center gap-1">
+              <button
+                type="button"
+                onClick={() => (watched ? removeWatchCourse(course.id) : addWatchCourse(course.id))}
+                aria-label={watched ? `${course.courseName} 관심목록에서 제거` : `${course.courseName} 관심목록에 추가`}
+                title="관심목록에 추가 — 그룹과 별개로 경쟁률만 추적"
+                className={`px-0.5 text-sm transition-colors duration-150 ${
+                  watched ? "text-primary" : "text-neutral hover:text-primary"
+                }`}
+              >
+                ★
+              </button>
+              <button
+                type="button"
+                disabled={alreadyAdded}
+                onClick={() => addCourseToGroup(group.id, course.id, semesterCode)}
+                className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white shadow-button transition-all duration-150 hover:bg-primary-hover active:scale-95 active:bg-primary-active active:shadow-none disabled:scale-100 disabled:bg-neutral/30 disabled:text-text-secondary disabled:shadow-none"
+              >
+                {alreadyAdded ? "담김" : "담기"}
+              </button>
+            </div>
+          );
+        }}
+      />
     </Modal>
   );
 }
