@@ -21,13 +21,6 @@ export interface CourseTableProps {
   /** Appended after the standard 6 columns, before 비고/action. */
   extraColumns?: CourseTableExtraColumn[];
   showRemarks?: boolean;
-  /** DESIGN.md's "always exposed" set for a course row is only
-   * 학수번호-분반/시간/강의실 -- 경쟁률/교수명 aren't in it, so callers with
-   * limited width (e.g. a group's already-added course list) can drop them
-   * instead of squeezing every column and having the last ones read as cut
-   * off. Both default to shown for every other caller. */
-  showCompetition?: boolean;
-  showProfessor?: boolean;
   emptyMessage?: ReactNode;
   className?: string;
 }
@@ -133,8 +126,6 @@ export function CourseTable({
   renderAction,
   extraColumns = [],
   showRemarks = false,
-  showCompetition = true,
-  showProfessor = true,
   emptyMessage = "표시할 과목이 없습니다.",
   className,
 }: CourseTableProps) {
@@ -169,8 +160,8 @@ export function CourseTable({
             <SortableHeader sortKey="courseNo" sort={sort} onSort={handleSort} />
             <SortableHeader sortKey="time" sort={sort} onSort={handleSort} />
             <SortableHeader sortKey="classroom" sort={sort} onSort={handleSort} />
-            {showCompetition && <SortableHeader sortKey="competition" sort={sort} onSort={handleSort} />}
-            {showProfessor && <SortableHeader sortKey="professor" sort={sort} onSort={handleSort} />}
+            <SortableHeader sortKey="competition" sort={sort} onSort={handleSort} />
+            <SortableHeader sortKey="professor" sort={sort} onSort={handleSort} />
             {extraColumns.map((col) => (
               <th key={col.key} className="px-2 py-1 font-medium">
                 {col.header}
@@ -198,26 +189,22 @@ export function CourseTable({
                 <td className="px-2 py-1 text-text-secondary">
                   <Cell text={row.classroom} />
                 </td>
-                {showCompetition && (
-                  <td className="px-2 py-1 text-text-secondary tabular-nums">
-                    <span
-                      className="block truncate"
-                      title={
-                        competitionRate.isMock
-                          ? "실제 신청 인원 데이터가 아직 없어 임의로 표시한 값입니다"
-                          : undefined
-                      }
-                    >
-                      {competitionRate.enrolled}/{competitionRate.capacity} ({competitionRate.rate.toFixed(2)})
-                      {competitionRate.isMock && <span className="text-neutral">*</span>}
-                    </span>
-                  </td>
-                )}
-                {showProfessor && (
-                  <td className="px-2 py-1 text-text-secondary">
-                    <Cell text={row.course.professor ?? "-"} />
-                  </td>
-                )}
+                <td className="px-2 py-1 text-text-secondary tabular-nums">
+                  <span
+                    className="block truncate"
+                    title={
+                      competitionRate.isMock
+                        ? "실제 신청 인원 데이터가 아직 없어 임의로 표시한 값입니다"
+                        : undefined
+                    }
+                  >
+                    {competitionRate.enrolled}/{competitionRate.capacity} ({competitionRate.rate.toFixed(2)})
+                    {competitionRate.isMock && <span className="text-neutral">*</span>}
+                  </span>
+                </td>
+                <td className="px-2 py-1 text-text-secondary">
+                  <Cell text={row.course.professor ?? "-"} />
+                </td>
                 {extraColumns.map((col) => (
                   <td key={col.key} className="px-2 py-1 text-text-secondary">
                     {col.render({ course: row.course })}
@@ -241,13 +228,7 @@ export function CourseTable({
               <td
                 className="px-2 py-1 text-text-secondary"
                 colSpan={
-                  4 +
-                  (showCompetition ? 1 : 0) +
-                  (showProfessor ? 1 : 0) +
-                  extraColumns.length +
-                  (showRemarks ? 1 : 0) +
-                  (renderAction ? 1 : 0) +
-                  (renderLeading ? 1 : 0)
+                  6 + extraColumns.length + (showRemarks ? 1 : 0) + (renderAction ? 1 : 0) + (renderLeading ? 1 : 0)
                 }
               >
                 {emptyMessage}

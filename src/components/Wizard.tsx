@@ -40,9 +40,14 @@ export function Wizard() {
 
   const stepKey = WIZARD_STEPS[stepIndex];
   const StepComponent = STEP_COMPONENTS[stepKey];
+  // 그룹&과목 단계만 넓힌다 -- 담은 과목 표(강의명/학수번호/시간/강의실/경쟁률/
+  // 교수명 + 드래그 핸들 + 삭제 버튼)가 max-w-2xl에서 늘 잘려 보였다. 컬럼을
+  // 줄이는 대신(직접 피드백으로 되돌림) 이 단계에서만 실제로 폭을 넓힌다 --
+  // 다른 단계는 여백만 넓어질 내용이 없어서 그대로 max-w-2xl 유지.
+  const containerMaxWidth = stepKey === "groups" ? "max-w-6xl" : "max-w-2xl";
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col px-4 py-6">
+    <div className={`mx-auto flex ${containerMaxWidth} flex-col px-4 py-6`}>
       {/* Rebuilt from scratch, not just narrowed -- direct feedback rejected
           the whole composition, not just its width. The circle-and-
           connecting-line stepper (three ~28px badges bridged by full-width
@@ -106,7 +111,7 @@ export function Wizard() {
           keeps it in exactly the same spot regardless of how much content
           the current step has. */}
       <div className="fixed inset-x-0 bottom-0 z-10 border-t border-neutral/15 bg-background">
-        <div className="mx-auto flex max-w-2xl justify-between px-4 py-3">
+        <div className={`mx-auto flex ${containerMaxWidth} justify-between px-4 py-3`}>
           <button
             type="button"
             onClick={back}

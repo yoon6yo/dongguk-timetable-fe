@@ -291,14 +291,8 @@ function GroupCard({
 
       {group.courseIds.length > 0 && (
         <div className="mt-2 rounded-md bg-background">
-          {/* 경쟁률/교수명 숨김 -- DESIGN.md의 "항상 노출" 목록(학수번호-분반/
-              시간/강의실)에 없는 두 컬럼이고, 이미 이 페이지 폭에서 잘려
-              보이던 원인이었다. 두 정보 모두 과목 추가 검색 화면에서 이미
-              확인했으므로 여기선 생략해도 정보 손실이 아니다. */}
           <CourseTable
             courses={group.courseIds.map((id) => courseById.get(id)).filter((c): c is CourseRow => Boolean(c))}
-            showCompetition={false}
-            showProfessor={false}
             renderLeading={(course) => (
               <DragHandle groupId={group.id} courseId={course.id} courseName={course.courseName} />
             )}
