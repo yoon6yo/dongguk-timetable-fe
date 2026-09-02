@@ -6,10 +6,17 @@ export function Modal({
   title,
   onClose,
   children,
+  maxWidthClassName = "max-w-lg",
 }: {
   title: string;
   onClose: () => void;
   children: React.ReactNode;
+  /** max-w-lg fits a form (AddCustomEventModal, StepWeights' 고급 설정), but
+   * a course-search table (학수번호/시간/강의실/경쟁률/교수명/학과 + 담기 button)
+   * at 512px pushed its own action button past the visible edge, forcing a
+   * horizontal scroll just to click 담기 -- a real usability bug, not a
+   * width-aesthetics one. Callers hosting a CourseTable pass a wider value. */
+  maxWidthClassName?: string;
 }) {
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -22,7 +29,7 @@ export function Modal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative flex max-h-[85vh] w-full max-w-lg flex-col rounded-lg bg-surface shadow-card-hover">
+      <div className={`relative flex max-h-[85vh] w-full ${maxWidthClassName} flex-col rounded-lg bg-surface shadow-card-hover`}>
         <div className="flex items-center justify-between border-b border-neutral/20 p-3">
           <h2 className="text-sm font-semibold">{title}</h2>
           <button

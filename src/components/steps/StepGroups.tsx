@@ -101,12 +101,12 @@ export function StepGroups() {
 }
 
 /**
- * Deliberately not a card -- 개인 일정 is a secondary, optional utility, not
- * a peer to a course group, so it shouldn't compete with GroupCard for the
- * same visual weight (border, shadow, fixed-width block). A single wrapping
- * row that only grows when there's something to show reads as "one more
- * small thing you can do here," not a second box demanding the same
- * attention as the actual groups above it.
+ * Lighter-weight than GroupCard (no header row, no title, tighter padding),
+ * not chrome-less -- a completely unboxed text row read as unfinished
+ * rather than "quietly secondary." DESIGN.md §2 keeps shadow-card on cards
+ * for a reason (content-dense/chrome-light means restrained chrome, not
+ * zero chrome); the demotion relative to a real course group should come
+ * from content and size, not from dropping the card treatment entirely.
  */
 function CustomEventsSection() {
   const events = useCustomEventsStore((s) => s.events);
@@ -114,7 +114,7 @@ function CustomEventsSection() {
   const [addOpen, setAddOpen] = useState(false);
 
   return (
-    <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs">
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 rounded-lg border border-neutral/15 bg-surface px-3 py-2.5 text-xs shadow-card">
       <span className="font-medium text-text-secondary">개인 일정</span>
       {events.length === 0 ? (
         <span className="text-text-secondary">아르바이트·동아리 등도 시간표에 넣고 충돌 검사할 수 있어요.</span>
@@ -382,7 +382,7 @@ function AddCourseModal({
   const removeWatchCourse = useWatchlistStore((s) => s.removeCourse);
 
   return (
-    <Modal title={`"${displayName}"에 과목 추가`} onClose={onClose}>
+    <Modal title={`"${displayName}"에 과목 추가`} onClose={onClose} maxWidthClassName="max-w-3xl">
       <CourseSearchPanel
         courses={courses}
         defaultSort="default"

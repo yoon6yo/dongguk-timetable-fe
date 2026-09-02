@@ -30,7 +30,7 @@ export function StepStart() {
         // is two short lines of text; stretching that across the whole
         // container the way the old card did left a wide box that was
         // mostly empty space either side of the actual content.
-        <div className="inline-flex w-fit items-center gap-2 rounded-full border border-primary/30 bg-primary-tint px-4 py-2">
+        <div className="inline-flex w-fit items-center gap-2 rounded-full border border-primary/30 bg-primary-tint px-5 py-2.5 shadow-card">
           <span className="text-xs text-text-secondary">최신 학기</span>
           <span className="text-sm font-semibold">{semester.label}</span>
         </div>
