@@ -133,7 +133,7 @@ export function CourseSearchPanel({
       </div>
 
       {allResults.length > SEARCH_RESULT_LIMIT && (
-        <p className="text-[11px] text-text-secondary">
+        <p className="text-xs text-text-secondary">
           검색 결과가 많아 상위 {SEARCH_RESULT_LIMIT}개만 보여드려요 — 검색어나 단과대/학과로 좁혀보세요.
         </p>
       )}

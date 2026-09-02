@@ -34,7 +34,7 @@ export function SavedTimetables() {
   return (
     <div className="mx-auto flex max-w-2xl flex-col px-4 py-6">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-bold">저장된 시간표</h1>
+        <h1 className="text-2xl font-bold tracking-tight">저장된 시간표</h1>
         <div className="flex gap-3 text-sm font-medium">
           <Link href="/" className="text-text-secondary hover:text-primary">
             홈
@@ -132,7 +132,7 @@ function SavedDetail({ item }: { item: SavedTimetable }) {
   return (
     <div className="mt-4 space-y-3 rounded-lg border border-neutral/15 bg-surface p-3 shadow-card">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold">저장된 시간표</h3>
+        <h3 className="text-lg font-semibold">저장된 시간표</h3>
         <p className="text-xs text-text-secondary">
           {item.courses.length}과목 · {item.totalCredit}학점
         </p>

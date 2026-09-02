@@ -147,7 +147,12 @@ export function CourseTable({
 
   return (
     <div className={`overflow-x-auto rounded-lg ${className ?? ""}`}>
-      <table className="w-full text-left text-xs">
+      {/* DESIGN.md §3: table/list body text is 14px (text-sm) with a tighter
+          130-135% line-height, not the 12px (text-xs) this had used since
+          the first version -- documented but never actually applied until
+          now. leading-tight (125%) is the closest built-in Tailwind step to
+          that target. */}
+      <table className="w-full text-left text-sm leading-tight">
         <thead>
           <tr className="text-text-secondary">
             {renderLeading && <th className="px-2 py-1" />}

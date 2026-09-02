@@ -250,7 +250,7 @@ function GroupCard({
           value={group.name}
           onChange={(e) => renameGroup(group.id, e.target.value)}
           placeholder={displayName}
-          className="min-w-0 flex-1 rounded border border-transparent bg-transparent text-sm font-semibold outline-none transition-colors hover:border-neutral focus:border-primary placeholder:font-semibold placeholder:text-foreground"
+          className="min-w-0 flex-1 rounded border border-transparent bg-transparent text-base font-semibold outline-none transition-colors hover:border-neutral focus:border-primary placeholder:font-semibold placeholder:text-foreground"
         />
         <div className="flex shrink-0 items-center gap-1">
           <button

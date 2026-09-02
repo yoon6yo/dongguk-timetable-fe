@@ -39,7 +39,7 @@ export function Watchlist() {
   return (
     <div className="mx-auto flex max-w-2xl flex-col px-4 py-6">
       <div className="mb-2 flex items-center justify-between">
-        <h1 className="text-xl font-bold">관심 강의 경쟁률</h1>
+        <h1 className="text-2xl font-bold tracking-tight">관심 강의 경쟁률</h1>
         <div className="flex gap-3 text-sm font-medium">
           <Link href="/" className="text-text-secondary hover:text-primary">
             홈
@@ -66,7 +66,7 @@ export function Watchlist() {
       {status === "loaded" && (
         <>
           <div className="mt-4 rounded-lg border border-neutral/15 bg-surface p-3 shadow-card">
-            <h2 className="text-sm font-semibold">담은 관심 강의</h2>
+            <h2 className="text-lg font-semibold">담은 관심 강의</h2>
             <div className="mt-2">
               <CourseTable
                 courses={watchedCourses}
@@ -87,7 +87,7 @@ export function Watchlist() {
           </div>
 
           <div className="mt-6 space-y-2">
-            <h2 className="text-sm font-semibold">과목 검색</h2>
+            <h2 className="text-lg font-semibold">과목 검색</h2>
             <CourseSearchPanel
               courses={courses}
               defaultSort="competition"
@@ -113,7 +113,7 @@ export function Watchlist() {
                           e.target.value = "";
                         }}
                         aria-label={`${course.courseName}을 시간표 그룹에 담기`}
-                        className="rounded-full border border-neutral px-2 py-1 text-[11px] text-text-secondary outline-none focus:border-primary"
+                        className="rounded-full border border-neutral px-2 py-1 text-xs text-text-secondary outline-none focus:border-primary"
                       >
                         <option value="">그룹에 담기</option>
                         {groups.map((g, idx) => {
@@ -127,7 +127,7 @@ export function Watchlist() {
                         })}
                       </select>
                     ) : (
-                      <Link href="/wizard" className="text-[11px] text-text-secondary hover:text-primary">
+                      <Link href="/wizard" className="text-xs text-text-secondary hover:text-primary">
                         그룹 없음 · 만들기
                       </Link>
                     )}

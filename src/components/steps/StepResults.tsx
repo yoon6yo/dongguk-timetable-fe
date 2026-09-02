@@ -276,7 +276,7 @@ export function StepResults() {
           {selected && (
             <div className="space-y-3 rounded-lg border border-neutral/15 bg-surface p-3 shadow-card">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold">선택한 시간표</h3>
+                <h3 className="text-lg font-semibold">선택한 시간표</h3>
                 <p className="text-xs text-text-secondary">
                   {selectedCourses.length}과목 · {selected.totalCredit}학점
                 </p>
