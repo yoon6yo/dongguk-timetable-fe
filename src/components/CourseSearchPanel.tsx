@@ -55,6 +55,15 @@ export function CourseSearchPanel({
     [courses, college, department, courseType, dayOfWeek, sort, query]
   );
   const results = allResults.slice(0, SEARCH_RESULT_LIMIT);
+  const hasActiveFilters = Boolean(college || department || courseType || dayOfWeek || query);
+
+  function resetFilters() {
+    setCollege("");
+    setDepartment("");
+    setCourseType("");
+    setDayOfWeek("");
+    setQuery("");
+  }
 
   return (
     <div className="space-y-2">
@@ -142,7 +151,22 @@ export function CourseSearchPanel({
         <CourseTable
           courses={results}
           showRemarks
-          emptyMessage="검색 결과가 없습니다."
+          emptyMessage={
+            hasActiveFilters ? (
+              <span>
+                조건에 맞는 과목이 없어요.{" "}
+                <button
+                  type="button"
+                  onClick={resetFilters}
+                  className="font-semibold text-primary underline decoration-primary-tint underline-offset-2 hover:text-primary-hover"
+                >
+                  필터 초기화
+                </button>
+              </span>
+            ) : (
+              "검색 결과가 없습니다."
+            )
+          }
           extraColumns={[{ key: "dept", header: "학과", render: ({ course }) => course.department ?? course.college }]}
           renderAction={renderAction}
         />

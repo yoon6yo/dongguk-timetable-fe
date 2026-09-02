@@ -20,9 +20,16 @@ export function StepStart() {
       {status === "loading" && <p className="text-sm text-text-secondary">최신 학기 강의 정보를 불러오는 중...</p>}
 
       {status === "error" && (
-        <p className="rounded-lg border border-error/40 bg-error/5 p-3 text-sm text-error">
-          강의 정보를 불러오지 못했습니다: {error}
-        </p>
+        <div className="flex flex-col items-center gap-3 rounded-lg border border-error/40 bg-error/5 p-3 text-center text-sm text-error">
+          <p>강의 정보를 불러오지 못했습니다: {error}</p>
+          <button
+            type="button"
+            onClick={() => fetchCourses()}
+            className="rounded-full bg-primary px-4 py-2 text-xs font-semibold text-white shadow-button transition-all duration-150 hover:bg-primary-hover active:scale-95"
+          >
+            다시 시도
+          </button>
+        </div>
       )}
 
       {status === "loaded" && semester && (

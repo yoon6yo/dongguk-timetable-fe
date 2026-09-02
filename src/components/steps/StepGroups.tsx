@@ -274,7 +274,7 @@ function GroupCard({
       </div>
 
       {group.courseIds.length > 0 && (
-        <div className="mt-2 bg-primary-tint">
+        <div className="mt-2 rounded-md bg-background">
           <CourseTable
             courses={group.courseIds.map((id) => courseById.get(id)).filter((c): c is CourseRow => Boolean(c))}
             renderLeading={(course) => (

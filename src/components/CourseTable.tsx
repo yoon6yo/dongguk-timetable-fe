@@ -21,7 +21,7 @@ export interface CourseTableProps {
   /** Appended after the standard 6 columns, before 비고/action. */
   extraColumns?: CourseTableExtraColumn[];
   showRemarks?: boolean;
-  emptyMessage?: string;
+  emptyMessage?: ReactNode;
   className?: string;
 }
 

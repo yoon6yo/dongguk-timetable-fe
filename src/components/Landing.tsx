@@ -23,7 +23,7 @@ export function Landing() {
             <span className="inline-block h-2 w-2 rounded-full bg-primary" />
             동국대학교
           </div>
-          <h1 className="mt-3 text-3xl font-bold tracking-tight">시간표 마법사</h1>
+          <h1 className="mt-3 text-2xl font-bold tracking-tight">시간표 마법사</h1>
           <p className="mt-2 text-sm text-text-secondary">
             그룹을 만들고 과목을 담으면, 충돌 없는 시간표 조합을 자동으로 찾아드립니다.
           </p>
