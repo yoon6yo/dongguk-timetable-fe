@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useMemo, useRef, useState } from "react";
 
 import { buildGenerationInput, type GenerationInput } from "@/lib/buildGenerationInput";
 import { rankCombinations, type ScoredCombination } from "@/lib/combinationGenerator";
@@ -96,6 +96,7 @@ export function StepResults() {
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [blackoutExport, setBlackoutExport] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
   const [savedNotice, setSavedNotice] = useState(false);
   const [creditWarning, setCreditWarning] = useState<CreditRangeWarning | null>(null);
   // 검색으로 생성된 조합 집합 자체(어떤 조합이 시간 충돌 없이 유효한지)는 가중치와
@@ -103,7 +104,6 @@ export function StepResults() {
   // 다시 돌리지 않고, 생성 시점에 저장해둔 이 맵으로 메인 스레드에서 즉시 재정렬한다.
   const [genMaps, setGenMaps] = useState<Pick<GenerationInput, "blocksByCourseId" | "creditByCourseId"> | null>(null);
   const prettyExportRef = useRef<HTMLDivElement>(null);
-  const selectedDetailRef = useRef<HTMLDivElement>(null);
 
   const customEventCourses = useMemo(() => customEvents.map(customEventToCourseRow), [customEvents]);
   // 개인 일정은 groupsStore에 담기는 실제 과목이 아니지만, 그리드/표/저장 등 모든 화면에서
@@ -125,12 +125,13 @@ export function StepResults() {
 
   const handleSelectCombo = useCallback((key: string) => setSelectedKey(key), []);
 
-  // 후보가 최대 200개까지 나올 수 있어서, 선택한 조합의 상세가 그 아래에만
-  // 뜨면 목록 끝까지 직접 스크롤해야 확인할 수 있다 -- 카드를 고르는 순간
-  // 상세로 자동 스크롤해서, 몇 번째 카드를 골랐든 같은 경험이 되게 한다.
-  useEffect(() => {
-    if (selectedKey) selectedDetailRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [selectedKey]);
+  // 후보가 최대 200개까지 나올 수 있어서, 선택한 조합의 상세를 목록 아래
+  // 어딘가에 인라인으로 두면(자동 스크롤을 붙이더라도) 목록 자체가 시야에서
+  // 계속 오르내린다 -- 모달로 띄우면 몇 번째 카드를 골랐든 위치가 항상 같다.
+  function closeDetail() {
+    setSelectedKey(null);
+    setExportOpen(false);
+  }
 
   function handleGenerate() {
     markGenerateAttempted();
@@ -279,79 +280,100 @@ export function StepResults() {
           </ul>
 
           {selected && (
-            <div ref={selectedDetailRef} className="space-y-3 rounded-lg border border-neutral/15 bg-surface p-3 shadow-card">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">선택한 시간표</h3>
+            <Modal title="선택한 시간표" onClose={closeDetail} maxWidthClassName="max-w-4xl">
+              <div className="space-y-3">
                 <p className="text-xs text-text-secondary">
                   {selectedCourses.length}과목 · {selected.totalCredit}학점
                 </p>
-              </div>
 
-              {/* Stacked, not side-by-side -- at this page's max-w-2xl width, a
-                  lg:grid-cols-2 split gives TimetableGrid roughly ~330px, well
-                  under the ~416px it needs for 5 weekday columns at readable
-                  size, so Thu/Fri ended up squeezed past the edge of an
-                  internal scroll box that wasn't obviously scrollable (looked
-                  cut off, not "scroll for more"). Full width removes the
-                  squeeze entirely instead of relying on a scroll affordance. */}
-              <div className="space-y-3 bg-background p-2">
-                <TimetableGrid courses={selectedCourses} />
-                <TimetableTable courses={selectedCourses} />
-              </div>
+                {/* Side-by-side, not stacked -- this only works because a modal
+                    can be wider than the page's own max-w-2xl column. `compact`
+                    keeps the grid from dominating the space now that it's
+                    sharing the row with the full table (which already carries
+                    every detail the compact grid drops). */}
+                <div className="grid gap-3 bg-background p-2 sm:grid-cols-2">
+                  <TimetableGrid courses={selectedCourses} compact />
+                  <TimetableTable courses={selectedCourses} />
+                </div>
 
-              <div className="flex flex-wrap items-center gap-2 border-t border-neutral/20 pt-3">
-                <button
-                  type="button"
-                  onClick={handleSaveTimetable}
-                  className="rounded-full bg-primary-tint px-3 py-1 text-xs font-semibold text-primary transition-all duration-150 hover:bg-primary hover:text-white active:scale-95"
-                >
-                  {savedNotice ? "저장됨 ✓" : "★ 저장된 시간표에 추가"}
-                </button>
-                <span className="h-4 w-px bg-neutral/30" />
-                <span className="text-xs font-medium text-text-secondary">내보내기</span>
-                <span className="flex items-center gap-1 rounded-full border border-neutral pl-3 pr-1 text-xs font-semibold">
+                <div className="flex flex-wrap items-center gap-2 border-t border-neutral/20 pt-3">
                   <button
                     type="button"
-                    onClick={handleExportPng}
-                    className="py-1 transition-colors duration-150 hover:text-primary"
+                    onClick={handleSaveTimetable}
+                    aria-label="저장된 시간표에 추가"
+                    title="저장된 시간표에 추가"
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-base transition-all duration-150 active:scale-95 ${
+                      savedNotice ? "bg-primary text-white" : "bg-primary-tint text-primary hover:bg-primary hover:text-white"
+                    }`}
                   >
-                    이미지(PNG)
+                    ★
                   </button>
-                  <span className="h-3 w-px bg-neutral/30" />
-                  <label className="flex items-center gap-1 rounded-full px-2 py-1 font-normal text-text-secondary hover:text-primary">
-                    <input
-                      type="checkbox"
-                      checked={blackoutExport}
-                      onChange={(e) => setBlackoutExport(e.target.checked)}
-                    />
-                    정보 가리기(색 블록만)
-                  </label>
-                </span>
-                <button
-                  type="button"
-                  onClick={handleExportCsv}
-                  className="rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
-                >
-                  CSV
-                </button>
-                <button
-                  type="button"
-                  onClick={handleExportTxt}
-                  className="rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
-                >
-                  텍스트
-                </button>
-              </div>
+                  <button
+                    type="button"
+                    onClick={() => setExportOpen((v) => !v)}
+                    aria-expanded={exportOpen}
+                    className="flex items-center gap-1 rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
+                  >
+                    내보내기
+                    <svg
+                      viewBox="0 0 20 20"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      className={`h-3 w-3 transition-transform duration-150 ${exportOpen ? "rotate-180" : ""}`}
+                    >
+                      <path d="M5 7.5L10 12.5L15 7.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                </div>
 
-              {/* Off-screen (not display:none, so html-to-image can still rasterize it) --
-                  the actual PNG export target: grid-only, 에타(Everytime)-style card, so the
-                  shared image stays clean regardless of what's shown on screen above. */}
-              <div className="fixed left-[-9999px] top-0" aria-hidden>
-                <div ref={prettyExportRef}>
-                  <TimetableExportCard courses={selectedCourses} blackout={blackoutExport} />
+                {exportOpen && (
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    <span className="flex items-center gap-1 rounded-full border border-neutral pl-3 pr-1 text-xs font-semibold">
+                      <button
+                        type="button"
+                        onClick={handleExportPng}
+                        className="py-1 transition-colors duration-150 hover:text-primary"
+                      >
+                        이미지(PNG)
+                      </button>
+                      <span className="h-3 w-px bg-neutral/30" />
+                      <label className="flex items-center gap-1 rounded-full px-2 py-1 font-normal text-text-secondary hover:text-primary">
+                        <input
+                          type="checkbox"
+                          checked={blackoutExport}
+                          onChange={(e) => setBlackoutExport(e.target.checked)}
+                        />
+                        정보 가리기(색 블록만)
+                      </label>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleExportCsv}
+                      className="rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
+                    >
+                      CSV
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleExportTxt}
+                      className="rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
+                    >
+                      텍스트
+                    </button>
+                  </div>
+                )}
+
+                {/* Off-screen (not display:none, so html-to-image can still rasterize it) --
+                    the actual PNG export target: grid-only, 에타(Everytime)-style card, so the
+                    shared image stays clean regardless of what's shown on screen above. */}
+                <div className="fixed left-[-9999px] top-0" aria-hidden>
+                  <div ref={prettyExportRef}>
+                    <TimetableExportCard courses={selectedCourses} blackout={blackoutExport} />
+                  </div>
                 </div>
               </div>
-            </div>
+            </Modal>
           )}
         </>
       )}

@@ -15,6 +15,7 @@ import {
 import { useCoursesStore } from "@/store/coursesStore";
 
 import { CourseTable } from "./CourseTable";
+import { Modal } from "./Modal";
 import { TimetableExportCard } from "./TimetableExportCard";
 import { TimetableGrid } from "./TimetableGrid";
 
@@ -63,7 +64,7 @@ export function SavedTimetables() {
         ))}
       </div>
 
-      {selected && <SavedDetail item={selected} />}
+      {selected && <SavedDetail item={selected} onClose={() => setSelectedId(null)} />}
     </div>
   );
 }
@@ -115,10 +116,11 @@ function SavedCard({
   );
 }
 
-function SavedDetail({ item }: { item: SavedTimetable }) {
+function SavedDetail({ item, onClose }: { item: SavedTimetable; onClose: () => void }) {
   const exportRef = useRef<HTMLDivElement>(null);
   const liveSemesterId = useCoursesStore((s) => s.semester?.id ?? null);
   const liveCourses = useCoursesStore((s) => s.courses);
+  const [exportOpen, setExportOpen] = useState(false);
   const coursesWithFreshRate = useMemo(
     () => refreshCompetitionRate(item.courses, item.semesterId, liveSemesterId, liveCourses),
     [item.courses, item.semesterId, liveSemesterId, liveCourses]
@@ -130,54 +132,74 @@ function SavedDetail({ item }: { item: SavedTimetable }) {
   }
 
   return (
-    <div className="mt-4 space-y-3 rounded-lg border border-neutral/15 bg-surface p-3 shadow-card">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">저장된 시간표</h3>
+    <Modal title="저장된 시간표" onClose={onClose} maxWidthClassName="max-w-4xl">
+      <div className="space-y-3">
         <p className="text-xs text-text-secondary">
           {item.courses.length}과목 · {item.totalCredit}학점
         </p>
-      </div>
 
-      {/* Stacked, not side-by-side -- see StepResults.tsx for why: at this
-          page's max-w-2xl width, a 2-column split squeezes TimetableGrid's
-          5 weekday columns under a scrollable edge that reads as "cut off"
-          rather than "scroll for more". */}
-      <div className="space-y-3 bg-background p-2">
-        <TimetableGrid courses={item.courses} />
-        <CourseTable courses={coursesWithFreshRate} showRemarks />
-      </div>
+        {/* Side-by-side, not stacked -- see StepResults.tsx for the same
+            pattern: a modal can be wider than the page's own max-w-2xl
+            column, so `compact` + a table sharing the row fits without
+            squeezing Thu/Fri past a scroll edge. */}
+        <div className="grid gap-3 bg-background p-2 sm:grid-cols-2">
+          <TimetableGrid courses={item.courses} compact />
+          <CourseTable courses={coursesWithFreshRate} showRemarks />
+        </div>
 
-      <div className="flex flex-wrap items-center gap-2 border-t border-neutral/20 pt-3">
-        <span className="text-xs font-medium text-text-secondary">내보내기</span>
-        <button
-          type="button"
-          onClick={handleExportPng}
-          className="rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
-        >
-          이미지(PNG)
-        </button>
-        <button
-          type="button"
-          onClick={() => exportTimetableAsCsv(item.courses, "timetable.csv")}
-          className="rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
-        >
-          CSV
-        </button>
-        <button
-          type="button"
-          onClick={() => exportTimetableAsTxt(item.courses, "timetable.txt")}
-          className="rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
-        >
-          텍스트
-        </button>
-      </div>
+        <div className="flex flex-wrap items-center gap-2 border-t border-neutral/20 pt-3">
+          <button
+            type="button"
+            onClick={() => setExportOpen((v) => !v)}
+            aria-expanded={exportOpen}
+            className="flex items-center gap-1 rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
+          >
+            내보내기
+            <svg
+              viewBox="0 0 20 20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              className={`h-3 w-3 transition-transform duration-150 ${exportOpen ? "rotate-180" : ""}`}
+            >
+              <path d="M5 7.5L10 12.5L15 7.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        </div>
 
-      {/* Off-screen PNG export target -- grid-only 에타 스타일 card, same as StepResults. */}
-      <div className="fixed left-[-9999px] top-0" aria-hidden>
-        <div ref={exportRef}>
-          <TimetableExportCard courses={item.courses} />
+        {exportOpen && (
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <button
+              type="button"
+              onClick={handleExportPng}
+              className="rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
+            >
+              이미지(PNG)
+            </button>
+            <button
+              type="button"
+              onClick={() => exportTimetableAsCsv(item.courses, "timetable.csv")}
+              className="rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
+            >
+              CSV
+            </button>
+            <button
+              type="button"
+              onClick={() => exportTimetableAsTxt(item.courses, "timetable.txt")}
+              className="rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
+            >
+              텍스트
+            </button>
+          </div>
+        )}
+
+        {/* Off-screen PNG export target -- grid-only 에타 스타일 card, same as StepResults. */}
+        <div className="fixed left-[-9999px] top-0" aria-hidden>
+          <div ref={exportRef}>
+            <TimetableExportCard courses={item.courses} />
+          </div>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
