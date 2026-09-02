@@ -76,12 +76,13 @@ export function StepGroups() {
         + 그룹 추가
       </button>
 
-      {/* Grid, not a vertical stack -- a single group (or the 개인 일정
-          card alone) used to render as a card stretched across the full
-          container width holding maybe two lines of actual content,
-          exactly the "가로로 긴 박스" the density pass was supposed to have
-          already fixed. Two columns means one card is only ever as wide as
-          it needs to be; it still stacks to one column on narrow screens. */}
+      {/* Groups are this step's actual subject, so they get the grid --
+          multiple candidate-course cards naturally tile two-up instead of
+          each stretching the full row for two lines of content. 개인 일정
+          is a secondary, optional utility, not a peer to a course group;
+          pairing it 50/50 next to "그룹 1" as an equal-weight card was the
+          mechanical fix, not a real hierarchy. It's a separate, deliberately
+          lighter-weight section below instead -- see CustomEventsSection. */}
       <div className="grid gap-3 sm:grid-cols-2">
         <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={() => setActiveCourse(null)}>
           {groups.map((group, index) => (
@@ -92,52 +93,53 @@ export function StepGroups() {
             {activeCourse && <DraggedRowPreview course={activeCourse} />}
           </DragOverlay>
         </DndContext>
-
-        <CustomEventsSection />
       </div>
+
+      <CustomEventsSection />
     </div>
   );
 }
 
+/**
+ * Deliberately not a card -- 개인 일정 is a secondary, optional utility, not
+ * a peer to a course group, so it shouldn't compete with GroupCard for the
+ * same visual weight (border, shadow, fixed-width block). A single wrapping
+ * row that only grows when there's something to show reads as "one more
+ * small thing you can do here," not a second box demanding the same
+ * attention as the actual groups above it.
+ */
 function CustomEventsSection() {
   const events = useCustomEventsStore((s) => s.events);
   const removeEvent = useCustomEventsStore((s) => s.removeEvent);
   const [addOpen, setAddOpen] = useState(false);
 
   return (
-    <div className="rounded-lg border border-neutral/15 bg-surface p-3 shadow-card">
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold">개인 일정</h2>
-        <button
-          type="button"
-          onClick={() => setAddOpen(true)}
-          className="text-xs font-semibold text-primary underline decoration-primary-tint underline-offset-2 transition-colors hover:text-primary-hover"
-        >
-          + 개인 일정 추가
-        </button>
-      </div>
-      <p className="mt-1 text-xs text-text-secondary">
-        아르바이트·동아리처럼 정규 과목이 아닌 일정도 시간표에 넣고 충돌 검사에 똑같이 반영할 수 있어요.
-      </p>
-      {events.length > 0 && (
-        <ul className="mt-2 space-y-1">
-          {events.map((event) => (
-            <li key={event.id} className="flex items-center justify-between rounded-lg bg-primary-tint px-2 py-1 text-xs">
-              <span>
-                {event.name} · {DAY_LABELS[event.dayOfWeek]} {event.startTime}~{event.endTime}
-              </span>
-              <button
-                type="button"
-                onClick={() => removeEvent(event.id)}
-                aria-label={`${event.name} 삭제`}
-                className="text-text-secondary hover:text-error"
-              >
-                ×
-              </button>
-            </li>
-          ))}
-        </ul>
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs">
+      <span className="font-medium text-text-secondary">개인 일정</span>
+      {events.length === 0 ? (
+        <span className="text-text-secondary">아르바이트·동아리 등도 시간표에 넣고 충돌 검사할 수 있어요.</span>
+      ) : (
+        events.map((event) => (
+          <span key={event.id} className="inline-flex items-center gap-1 rounded-full bg-primary-tint px-2 py-1">
+            {event.name} · {DAY_LABELS[event.dayOfWeek]} {event.startTime}~{event.endTime}
+            <button
+              type="button"
+              onClick={() => removeEvent(event.id)}
+              aria-label={`${event.name} 삭제`}
+              className="text-text-secondary hover:text-error"
+            >
+              ×
+            </button>
+          </span>
+        ))
       )}
+      <button
+        type="button"
+        onClick={() => setAddOpen(true)}
+        className="font-semibold text-primary underline decoration-primary-tint underline-offset-2 transition-colors hover:text-primary-hover"
+      >
+        + 추가
+      </button>
 
       {addOpen && <AddCustomEventModal onClose={() => setAddOpen(false)} />}
     </div>
