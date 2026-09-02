@@ -168,7 +168,7 @@ export function CourseTable({
               </th>
             ))}
             {showRemarks && <th className="px-2 py-1 font-medium">비고</th>}
-            {renderAction && <th className="px-2 py-1" />}
+            {renderAction && <th className="sticky right-0 z-10 border-l border-neutral/15 bg-surface px-2 py-1" />}
           </tr>
         </thead>
         <tbody>
@@ -215,7 +215,11 @@ export function CourseTable({
                     <Cell text={row.course.remarks ?? "-"} />
                   </td>
                 )}
-                {renderAction && <td className="px-2 py-1">{renderAction(row.course)}</td>}
+                {renderAction && (
+                  <td className="sticky right-0 z-10 border-l border-neutral/15 bg-surface px-2 py-1">
+                    {renderAction(row.course)}
+                  </td>
+                )}
               </tr>
             );
           })}
