@@ -13,6 +13,7 @@ import { useWatchlistStore } from "@/store/watchlistStore";
 
 import { CourseSearchPanel } from "../CourseSearchPanel";
 import { CourseTable } from "../CourseTable";
+import { FormField } from "../FormField";
 import { Modal } from "../Modal";
 
 interface DragData {
@@ -153,59 +154,72 @@ function AddCustomEventModal({ onClose }: { onClose: () => void }) {
   const [dayOfWeek, setDayOfWeek] = useState("1");
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("10:00");
-  const [validationError, setValidationError] = useState<string | null>(null);
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [timeError, setTimeError] = useState<string | null>(null);
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!name.trim()) {
-      setValidationError("일정 이름을 입력해주세요.");
-      return;
-    }
-    if (startTime >= endTime) {
-      setValidationError("종료 시각은 시작 시각보다 늦어야 합니다.");
-      return;
-    }
+    const nextNameError = name.trim() ? null : "일정 이름을 입력해주세요.";
+    const nextTimeError = startTime >= endTime ? "종료 시각은 시작 시각보다 늦어야 합니다." : null;
+    setNameError(nextNameError);
+    setTimeError(nextTimeError);
+    if (nextNameError || nextTimeError) return;
     addEvent({ name: name.trim(), dayOfWeek: Number(dayOfWeek), startTime, endTime });
     onClose();
   }
 
   return (
     <Modal title="개인 일정 추가" onClose={onClose}>
-      <form onSubmit={handleSubmit} className="space-y-2">
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="일정 이름 (예: 아르바이트)"
-          autoFocus
-          className="w-full rounded-lg border border-neutral px-2 py-1.5 text-sm outline-none focus:border-primary"
-        />
-        <div className="grid grid-cols-3 gap-2">
-          <select
-            value={dayOfWeek}
-            onChange={(e) => setDayOfWeek(e.target.value)}
-            className="rounded-lg border border-neutral px-2 py-1.5 text-sm"
-          >
-            {Object.entries(DAY_LABELS).map(([day, label]) => (
-              <option key={day} value={day}>
-                {label}요일
-              </option>
-            ))}
-          </select>
+      <form onSubmit={handleSubmit} className="space-y-3">
+        <FormField label="일정 이름" errorText={nameError} htmlFor="custom-event-name">
           <input
-            type="time"
-            value={startTime}
-            onChange={(e) => setStartTime(e.target.value)}
-            className="rounded-lg border border-neutral px-2 py-1.5 text-sm"
+            id="custom-event-name"
+            type="text"
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value);
+              setNameError(null);
+            }}
+            placeholder="예: 아르바이트"
+            autoFocus
+            className={`w-full rounded-lg border px-2 py-1.5 text-sm outline-none focus:border-primary ${
+              nameError ? "border-error" : "border-neutral"
+            }`}
           />
-          <input
-            type="time"
-            value={endTime}
-            onChange={(e) => setEndTime(e.target.value)}
-            className="rounded-lg border border-neutral px-2 py-1.5 text-sm"
-          />
-        </div>
-        {validationError && <p className="text-xs text-error">{validationError}</p>}
+        </FormField>
+        <FormField label="요일 및 시간" errorText={timeError} constraintText="같은 시간대에 다른 일정이 겹쳐도 함께 추가할 수 있어요.">
+          <div className="grid grid-cols-3 gap-2">
+            <select
+              value={dayOfWeek}
+              onChange={(e) => setDayOfWeek(e.target.value)}
+              className="rounded-lg border border-neutral px-2 py-1.5 text-sm"
+            >
+              {Object.entries(DAY_LABELS).map(([day, label]) => (
+                <option key={day} value={day}>
+                  {label}요일
+                </option>
+              ))}
+            </select>
+            <input
+              type="time"
+              value={startTime}
+              onChange={(e) => {
+                setStartTime(e.target.value);
+                setTimeError(null);
+              }}
+              className={`rounded-lg border px-2 py-1.5 text-sm ${timeError ? "border-error" : "border-neutral"}`}
+            />
+            <input
+              type="time"
+              value={endTime}
+              onChange={(e) => {
+                setEndTime(e.target.value);
+                setTimeError(null);
+              }}
+              className={`rounded-lg border px-2 py-1.5 text-sm ${timeError ? "border-error" : "border-neutral"}`}
+            />
+          </div>
+        </FormField>
         <button
           type="submit"
           className="w-full rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white shadow-button transition-all duration-150 hover:bg-primary-hover active:scale-95"
