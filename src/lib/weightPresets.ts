@@ -4,6 +4,11 @@ export interface WeightPreset {
   key: string;
   label: string;
   weights: Weights;
+  /** Plain-sentence explanation of what the chip actually sorts by --
+   * shown as a hover title, grounded in the same concrete rule the scoring
+   * function underneath applies (e.g. lunch's exact 12:00~13:00 window)
+   * rather than restating the label in other words. */
+  description: string;
 }
 
 /**
@@ -17,13 +22,48 @@ export interface WeightPreset {
  * on that axis instead of accidentally importing a hidden morning bias.
  */
 export const WEIGHT_PRESETS: WeightPreset[] = [
-  { key: "balanced", label: "균형있게", weights: { gap: 50, lunch: 50, freeDay: 50, timeOfDay: 50, commute: 50 } },
-  { key: "gap", label: "공강 적은 순", weights: { gap: 100, lunch: 0, freeDay: 0, timeOfDay: 50, commute: 0 } },
-  { key: "lunch", label: "점심시간 확보 순", weights: { gap: 0, lunch: 100, freeDay: 0, timeOfDay: 50, commute: 0 } },
-  { key: "freeDay", label: "공강일 많은 순", weights: { gap: 0, lunch: 0, freeDay: 100, timeOfDay: 50, commute: 0 } },
-  { key: "commute", label: "이동거리 적은 순", weights: { gap: 0, lunch: 0, freeDay: 0, timeOfDay: 50, commute: 100 } },
-  { key: "morning", label: "오전 위주", weights: { gap: 0, lunch: 0, freeDay: 0, timeOfDay: 0, commute: 0 } },
-  { key: "afternoon", label: "오후 위주", weights: { gap: 0, lunch: 0, freeDay: 0, timeOfDay: 100, commute: 0 } },
+  {
+    key: "balanced",
+    label: "균형있게",
+    weights: { gap: 50, lunch: 50, freeDay: 50, timeOfDay: 50, commute: 50 },
+    description: "다섯 가지 기준을 골고루 반영해서 정렬해요.",
+  },
+  {
+    key: "gap",
+    label: "공강 적은 순",
+    weights: { gap: 100, lunch: 0, freeDay: 0, timeOfDay: 50, commute: 0 },
+    description: "수업과 수업 사이 빈 시간이 적은 순서로 정렬해요.",
+  },
+  {
+    key: "lunch",
+    label: "점심시간 확보 순",
+    weights: { gap: 0, lunch: 100, freeDay: 0, timeOfDay: 50, commute: 0 },
+    description: "점심시간(12:00~13:00)에 수업이 없는 날이 많은 순서로 정렬해요.",
+  },
+  {
+    key: "freeDay",
+    label: "공강일 많은 순",
+    weights: { gap: 0, lunch: 0, freeDay: 100, timeOfDay: 50, commute: 0 },
+    description: "월~금 중 수업이 아예 없는 요일이 많은 순서로 정렬해요.",
+  },
+  {
+    key: "commute",
+    label: "이동거리 적은 순",
+    weights: { gap: 0, lunch: 0, freeDay: 0, timeOfDay: 50, commute: 100 },
+    description: "건물 사이 이동 거리가 짧은 순서로 정렬해요.",
+  },
+  {
+    key: "morning",
+    label: "오전 위주",
+    weights: { gap: 0, lunch: 0, freeDay: 0, timeOfDay: 0, commute: 0 },
+    description: "수업 시작 시간이 이른 순서로 정렬해요.",
+  },
+  {
+    key: "afternoon",
+    label: "오후 위주",
+    weights: { gap: 0, lunch: 0, freeDay: 0, timeOfDay: 100, commute: 0 },
+    description: "수업 시작 시간이 늦은 순서로 정렬해요.",
+  },
 ];
 
 /** Returns the preset key exactly matching these weights, or null if the
@@ -32,18 +72,4 @@ export const WEIGHT_PRESETS: WeightPreset[] = [
 export function matchWeightPreset(weights: Weights): string | null {
   const match = WEIGHT_PRESETS.find((p) => (Object.keys(p.weights) as (keyof Weights)[]).every((k) => p.weights[k] === weights[k]));
   return match?.key ?? null;
-}
-
-/** "무엇이 실제로 반영되는지" 한 줄 요약 -- 정렬 기준 칩에 title(hover 상세)로
- * 붙여서, 예컨대 "공강 적은 순"이 다른 축은 전부 0으로 두는 순수 단일 기준
- * 정렬이라는 걸 클릭해서 고급 설정을 열어보지 않아도 알 수 있게 한다. */
-export function formatWeightsSummary(weights: Weights): string {
-  const timeOfDayLabel = weights.timeOfDay === 50 ? "오전/오후 중립" : weights.timeOfDay < 50 ? "오전 선호" : "오후 선호";
-  return [
-    `공강 ${weights.gap}`,
-    `점심 ${weights.lunch}`,
-    `공강일 ${weights.freeDay}`,
-    `이동거리 ${weights.commute}`,
-    timeOfDayLabel,
-  ].join(" · ");
 }

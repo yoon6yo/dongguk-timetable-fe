@@ -1,7 +1,7 @@
 import { memo } from "react";
 
 import { timeToMinutes } from "@/lib/conflict";
-import { courseBackgroundColor, courseTextColor } from "@/lib/courseColor";
+import { assignCourseColors, slotBackgroundColor, slotTextColor } from "@/lib/courseColor";
 import { activeDayColumns, computeGridLayout, DAY_LABELS, rowRange } from "@/lib/timeGrid";
 import type { CourseRow } from "@/lib/types";
 
@@ -70,6 +70,7 @@ export const TimetableGrid = memo(function TimetableGrid({
   blackout?: boolean;
 }) {
   const { blocks, unparsed, noSchedule } = splitBlocks(courses);
+  const colorAssignment = assignCourseColors(courses.map((c) => c.id));
   const layout = computeGridLayout(blocks);
   const dayColumns = activeDayColumns(blocks);
   const rowIndexes = Array.from({ length: layout.totalRows }, (_, i) => i);
@@ -131,8 +132,9 @@ export const TimetableGrid = memo(function TimetableGrid({
             const colIdx = dayColumns.indexOf(block.dayOfWeek);
             if (colIdx === -1) return null;
             const { start, span } = rowRange(block, layout);
-            const background = courseBackgroundColor(block.course.id);
-            const color = courseTextColor(block.course.id);
+            const slot = colorAssignment.get(block.course.id) ?? 0;
+            const background = slotBackgroundColor(slot);
+            const color = slotTextColor(slot);
             return (
               <div
                 key={idx}

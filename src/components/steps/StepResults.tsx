@@ -10,7 +10,7 @@ import { exportTimetableAsCsv } from "@/lib/exportCsv";
 import { exportElementAsPng } from "@/lib/exportImage";
 import { exportTimetableAsTxt } from "@/lib/exportTxt";
 import type { CourseRow } from "@/lib/types";
-import { formatWeightsSummary, matchWeightPreset, WEIGHT_PRESETS } from "@/lib/weightPresets";
+import { matchWeightPreset, WEIGHT_PRESETS } from "@/lib/weightPresets";
 import { useCombinationWorker } from "@/hooks/useCombinationWorker";
 import { useCoursesStore } from "@/store/coursesStore";
 import { MAX_SCHOOL_CREDIT, MIN_SCHOOL_CREDIT, useCreditLimitStore } from "@/store/creditLimitStore";
@@ -226,7 +226,7 @@ export function StepResults() {
                   key={preset.key}
                   type="button"
                   onClick={() => setWeights(preset.weights)}
-                  title={formatWeightsSummary(preset.weights)}
+                  title={preset.description}
                   className={`rounded-full px-3 py-1 text-xs font-semibold transition-all duration-150 active:scale-95 ${
                     activePresetKey === preset.key
                       ? "bg-primary text-white"
@@ -239,7 +239,7 @@ export function StepResults() {
               <button
                 type="button"
                 onClick={() => setAdvancedOpen(true)}
-                title={activePresetKey === null ? formatWeightsSummary(weights) : "세부 기준을 직접 조정해요"}
+                title="다섯 가지 기준의 중요도를 직접 조정해요."
                 className={`rounded-full px-3 py-1 text-xs font-semibold transition-all duration-150 active:scale-95 ${
                   activePresetKey === null
                     ? "bg-primary text-white"

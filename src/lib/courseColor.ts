@@ -30,3 +30,47 @@ export function courseBackgroundColor(courseId: number): string {
 export function courseTextColor(courseId: number): string {
   return WHITE_TEXT_SLOTS.has(courseColorIndex(courseId)) ? "#ffffff" : "#000000";
 }
+
+/**
+ * Per-render collision avoidance for the set of courses actually shown
+ * together in one grid. Plain courseColorIndex (id % 8) is blind to
+ * sibling courses, so two unrelated ids landing on the same slot by chance
+ * is common well before a combo has 8 courses -- with 5 courses already
+ * ~80% likely to have at least one collision (birthday-paradox math over 8
+ * slots), which reads as "two different courses painted the same color".
+ *
+ * Each course still prefers its own natural slot (id % 8) first, so the
+ * same course tends to land in the same color across different
+ * combinations that don't force a clash -- ids are processed in ascending
+ * order so, when two courses in the SAME set want the same slot, the lower
+ * id keeps it and the other linearly probes forward to the next free slot.
+ * Only once a set has more than SLOT_COUNT distinct courses does reuse
+ * become unavoidable (pigeonhole); probing then falls back to each
+ * course's own natural slot.
+ */
+export function assignCourseColors(courseIds: number[]): Map<number, number> {
+  const uniqueIds = Array.from(new Set(courseIds)).sort((a, b) => a - b);
+  const taken = new Array<boolean>(SLOT_COUNT).fill(false);
+  const assignment = new Map<number, number>();
+
+  for (const id of uniqueIds) {
+    let slot = courseColorIndex(id);
+    for (let attempt = 0; attempt < SLOT_COUNT && taken[slot]; attempt++) {
+      slot = (slot + 1) % SLOT_COUNT;
+    }
+    taken[slot] = true;
+    assignment.set(id, slot);
+  }
+
+  return assignment;
+}
+
+/** CSS var reference for a resolved slot index (see assignCourseColors). */
+export function slotBackgroundColor(slot: number): string {
+  return `var(--series-${slot + 1})`;
+}
+
+/** Text color that reads on a resolved slot's fill, in either mode. */
+export function slotTextColor(slot: number): string {
+  return WHITE_TEXT_SLOTS.has(slot) ? "#ffffff" : "#000000";
+}
