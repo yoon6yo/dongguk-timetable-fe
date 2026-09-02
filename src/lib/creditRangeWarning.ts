@@ -90,8 +90,8 @@ export function formatCreditRangeWarning(warning: CreditRangeWarning): string {
     case "empty-required":
       return `"${warning.groupName}" 그룹이 필수인데 담긴 과목이 없어요 — 과목을 최소 1개 담아야 조합을 만들 수 있어요.`;
     case "above-max":
-      return `필수 그룹만 골라도 최소 ${warning.minPossible}학점이라 목표 학점(${warning.maxCredit}학점)을 넘어요 — 필수 그룹을 줄이거나 학점이 적은 과목을 담아보세요.`;
+      return `필수 과목 학점 합이 ${warning.minPossible}학점이라 목표 ${warning.maxCredit}학점을 넘어요. 학점이 적은 과목으로 바꿔보세요.`;
     case "below-min":
-      return `필수 그룹만으로는 최대 ${warning.maxPossible}학점이라 최소 학점(${warning.minCredit}학점)에 못 미쳐요 — 선택 그룹에서 과목을 더 담아보세요.`;
+      return `지금 담은 과목으로는 최대 ${warning.maxPossible}학점이라 최소 ${warning.minCredit}학점에 못 미쳐요. 선택 그룹에 과목을 더 담아보세요.`;
   }
 }
