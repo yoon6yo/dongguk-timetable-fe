@@ -63,8 +63,8 @@ const ComboCard = memo(function ComboCard({
       <button
         type="button"
         onClick={() => onSelect(key)}
-        className={`w-full rounded-lg p-3 text-left text-sm shadow-card transition-all duration-150 hover:shadow-card-hover active:scale-[0.99] ${
-          isSelected ? "bg-primary-tint ring-2 ring-primary" : "bg-surface"
+        className={`w-full rounded-lg border p-3 text-left text-sm shadow-card transition-all duration-150 hover:shadow-card-hover active:scale-[0.99] ${
+          isSelected ? "border-primary/30 bg-primary-tint ring-2 ring-primary" : "border-neutral/15 bg-surface"
         }`}
       >
         <div className="flex items-center justify-between">
@@ -210,7 +210,7 @@ export function StepResults() {
 
       {result && (
         <>
-          <div className="space-y-1.5 rounded-lg bg-surface p-3 shadow-card">
+          <div className="space-y-1.5 rounded-lg border border-neutral/15 bg-surface p-3 shadow-card">
             <p className="text-sm font-medium">정렬 기준</p>
             <div className="flex flex-wrap gap-1.5">
               {WEIGHT_PRESETS.map((preset) => (
@@ -274,7 +274,7 @@ export function StepResults() {
           </ul>
 
           {selected && (
-            <div className="space-y-3 rounded-lg bg-surface p-3 shadow-card">
+            <div className="space-y-3 rounded-lg border border-neutral/15 bg-surface p-3 shadow-card">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-semibold">선택한 시간표</h3>
                 <p className="text-xs text-text-secondary">

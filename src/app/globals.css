@@ -88,5 +88,12 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  /* Geist Sans has no Korean glyphs -- every character actually shown to a
+     Korean-locale user falls through to whatever comes next. Arial/Helvetica
+     aren't guaranteed to carry Korean either, so without an explicit Korean
+     system-font name here, rendering depended entirely on the browser's own
+     per-glyph OS fallback silently doing the right thing. It usually does on
+     a normal desktop, but there's no reason to leave that to chance instead
+     of naming the actual Korean UI fonts. */
+  font-family: var(--font-sans), "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", Arial, Helvetica, sans-serif;
 }

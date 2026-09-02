@@ -99,7 +99,7 @@ function CustomEventsSection() {
   const [addOpen, setAddOpen] = useState(false);
 
   return (
-    <div className="rounded-lg bg-surface p-3 shadow-card">
+    <div className="rounded-lg border border-neutral/15 bg-surface p-3 shadow-card">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold">개인 일정</h2>
         <button
@@ -231,19 +231,19 @@ function GroupCard({
   return (
     <div
       ref={setNodeRef}
-      className={`rounded-lg bg-surface p-3 shadow-card transition-shadow hover:shadow-card-hover ${
-        isOver ? "ring-2 ring-primary" : ""
+      className={`rounded-lg border p-3 shadow-card transition-shadow hover:shadow-card-hover ${
+        isOver ? "border-primary/40 ring-2 ring-primary" : "border-neutral/15"
       }`}
     >
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <input
           type="text"
           value={group.name}
           onChange={(e) => renameGroup(group.id, e.target.value)}
           placeholder={displayName}
-          className="rounded border border-transparent bg-transparent font-medium outline-none transition-colors hover:border-neutral focus:border-primary placeholder:font-normal placeholder:text-text-secondary"
+          className="min-w-0 flex-1 rounded border border-transparent bg-transparent text-sm font-semibold outline-none transition-colors hover:border-neutral focus:border-primary placeholder:font-semibold placeholder:text-foreground"
         />
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-1">
           <button
             type="button"
             onClick={() => toggleRequired(group.id)}
@@ -257,7 +257,7 @@ function GroupCard({
             type="button"
             onClick={() => removeGroup(group.id)}
             aria-label={`${displayName} 그룹 삭제`}
-            className="rounded-md px-1 text-text-secondary transition-all duration-150 hover:text-error active:scale-95"
+            className="rounded-md px-1.5 py-1 text-xs text-text-secondary transition-all duration-150 hover:text-error active:scale-95"
           >
             삭제
           </button>

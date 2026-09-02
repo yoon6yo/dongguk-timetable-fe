@@ -21,7 +21,7 @@ export function StepWeights() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-lg bg-surface p-4 shadow-card">
+      <div className="rounded-lg border border-neutral/15 bg-surface p-4 shadow-card">
         <div className="mb-1 flex items-center justify-between text-sm">
           <span className="font-medium">목표 학점 (상한)</span>
           <span className="font-semibold text-primary">{maxCredit ?? MAX_SCHOOL_CREDIT}학점</span>
@@ -50,7 +50,7 @@ export function StepWeights() {
         두면 신경 쓰지 않는다는 뜻이고, 양쪽 끝으로 갈수록 그 방향을 강하게 반영합니다.
       </p>
 
-      <div className="space-y-3 rounded-lg bg-surface p-4 shadow-card">
+      <div className="space-y-3 rounded-lg border border-neutral/15 bg-surface p-4 shadow-card">
         {SLIDERS.map(({ key, label, low, high }, idx) => (
           <div key={key} className={idx > 0 ? "border-t border-neutral/20 pt-3" : ""}>
             <div className="mb-2 flex items-center justify-between text-sm">

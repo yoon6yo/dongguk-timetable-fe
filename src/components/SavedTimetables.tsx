@@ -83,8 +83,8 @@ function SavedCard({
 
   return (
     <div
-      className={`rounded-lg p-3 shadow-card transition-all duration-150 hover:shadow-card-hover ${
-        isSelected ? "bg-primary-tint ring-2 ring-primary" : "bg-surface"
+      className={`rounded-lg border p-3 shadow-card transition-all duration-150 hover:shadow-card-hover ${
+        isSelected ? "border-primary/30 bg-primary-tint ring-2 ring-primary" : "border-neutral/15 bg-surface"
       }`}
     >
       <div className="flex items-center justify-between gap-2">
@@ -130,7 +130,7 @@ function SavedDetail({ item }: { item: SavedTimetable }) {
   }
 
   return (
-    <div className="mt-4 space-y-3 rounded-lg bg-surface p-3 shadow-card">
+    <div className="mt-4 space-y-3 rounded-lg border border-neutral/15 bg-surface p-3 shadow-card">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold">저장된 시간표</h3>
         <p className="text-xs text-text-secondary">

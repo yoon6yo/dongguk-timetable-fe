@@ -65,7 +65,7 @@ export function Watchlist() {
 
       {status === "loaded" && (
         <>
-          <div className="mt-4 rounded-lg bg-surface p-3 shadow-card">
+          <div className="mt-4 rounded-lg border border-neutral/15 bg-surface p-3 shadow-card">
             <h2 className="text-sm font-semibold">담은 관심 강의</h2>
             <div className="mt-2">
               <CourseTable
