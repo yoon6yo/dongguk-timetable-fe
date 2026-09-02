@@ -280,34 +280,12 @@ export function StepResults() {
           </ul>
 
           {selected && (
-            <Modal title="선택한 시간표" onClose={closeDetail} maxWidthClassName="max-w-4xl">
+            <Modal title="선택한 시간표" onClose={closeDetail} maxWidthClassName="max-w-6xl">
               <div className="space-y-3">
-                <p className="text-xs text-text-secondary">
-                  {selectedCourses.length}과목 · {selected.totalCredit}학점
-                </p>
-
-                {/* Side-by-side, not stacked -- this only works because a modal
-                    can be wider than the page's own max-w-2xl column. `compact`
-                    keeps the grid from dominating the space now that it's
-                    sharing the row with the full table (which already carries
-                    every detail the compact grid drops). */}
-                <div className="grid gap-3 bg-background p-2 sm:grid-cols-2">
-                  <TimetableGrid courses={selectedCourses} compact />
-                  <TimetableTable courses={selectedCourses} />
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2 border-t border-neutral/20 pt-3">
-                  <button
-                    type="button"
-                    onClick={handleSaveTimetable}
-                    aria-label="저장된 시간표에 추가"
-                    title="저장된 시간표에 추가"
-                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-base transition-all duration-150 active:scale-95 ${
-                      savedNotice ? "bg-primary text-white" : "bg-primary-tint text-primary hover:bg-primary hover:text-white"
-                    }`}
-                  >
-                    ★
-                  </button>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-xs text-text-secondary">
+                    {selectedCourses.length}과목 · {selected.totalCredit}학점
+                  </p>
                   <button
                     type="button"
                     onClick={() => setExportOpen((v) => !v)}
@@ -328,7 +306,7 @@ export function StepResults() {
                 </div>
 
                 {exportOpen && (
-                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="flex items-center gap-1 rounded-full border border-neutral pl-3 pr-1 text-xs font-semibold">
                       <button
                         type="button"
@@ -363,6 +341,28 @@ export function StepResults() {
                     </button>
                   </div>
                 )}
+
+                {/* Side-by-side, not stacked -- this only works because a modal
+                    can be wider than the page's own max-w-2xl column. `compact`
+                    keeps the grid from dominating the space now that it's
+                    sharing the row with the full table (which already carries
+                    every detail the compact grid drops). */}
+                <div className="grid gap-3 bg-background p-2 sm:grid-cols-2">
+                  <TimetableGrid courses={selectedCourses} compact />
+                  <TimetableTable courses={selectedCourses} />
+                </div>
+
+                <div className="border-t border-neutral/20 pt-3">
+                  <button
+                    type="button"
+                    onClick={handleSaveTimetable}
+                    className={`rounded-full px-3 py-1 text-xs font-semibold transition-all duration-150 active:scale-95 ${
+                      savedNotice ? "bg-primary text-white" : "bg-primary-tint text-primary hover:bg-primary hover:text-white"
+                    }`}
+                  >
+                    {savedNotice ? "저장됨 ✓" : "★ 저장"}
+                  </button>
+                </div>
 
                 {/* Off-screen (not display:none, so html-to-image can still rasterize it) --
                     the actual PNG export target: grid-only, 에타(Everytime)-style card, so the

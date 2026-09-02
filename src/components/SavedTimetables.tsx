@@ -132,22 +132,12 @@ function SavedDetail({ item, onClose }: { item: SavedTimetable; onClose: () => v
   }
 
   return (
-    <Modal title="저장된 시간표" onClose={onClose} maxWidthClassName="max-w-4xl">
+    <Modal title="저장된 시간표" onClose={onClose} maxWidthClassName="max-w-6xl">
       <div className="space-y-3">
-        <p className="text-xs text-text-secondary">
-          {item.courses.length}과목 · {item.totalCredit}학점
-        </p>
-
-        {/* Side-by-side, not stacked -- see StepResults.tsx for the same
-            pattern: a modal can be wider than the page's own max-w-2xl
-            column, so `compact` + a table sharing the row fits without
-            squeezing Thu/Fri past a scroll edge. */}
-        <div className="grid gap-3 bg-background p-2 sm:grid-cols-2">
-          <TimetableGrid courses={item.courses} compact />
-          <CourseTable courses={coursesWithFreshRate} showRemarks />
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 border-t border-neutral/20 pt-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs text-text-secondary">
+            {item.courses.length}과목 · {item.totalCredit}학점
+          </p>
           <button
             type="button"
             onClick={() => setExportOpen((v) => !v)}
@@ -168,7 +158,7 @@ function SavedDetail({ item, onClose }: { item: SavedTimetable; onClose: () => v
         </div>
 
         {exportOpen && (
-          <div className="flex flex-wrap items-center gap-2 pt-1">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={handleExportPng}
@@ -192,6 +182,15 @@ function SavedDetail({ item, onClose }: { item: SavedTimetable; onClose: () => v
             </button>
           </div>
         )}
+
+        {/* Side-by-side, not stacked -- see StepResults.tsx for the same
+            pattern: a modal can be wider than the page's own max-w-2xl
+            column, so `compact` + a table sharing the row fits without
+            squeezing Thu/Fri past a scroll edge. */}
+        <div className="grid gap-3 bg-background p-2 sm:grid-cols-2">
+          <TimetableGrid courses={item.courses} compact />
+          <CourseTable courses={coursesWithFreshRate} showRemarks />
+        </div>
 
         {/* Off-screen PNG export target -- grid-only 에타 스타일 card, same as StepResults. */}
         <div className="fixed left-[-9999px] top-0" aria-hidden>

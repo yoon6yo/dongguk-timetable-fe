@@ -92,32 +92,39 @@ export function Wizard() {
         )}
       </div>
 
-      <div className="flex-1">
+      {/* pb-24 reserves room for the fixed nav bar below so it never covers
+          the step's last bit of content. */}
+      <div className="flex-1 pb-24">
         <StepComponent />
       </div>
 
-      {/* Sticky to the viewport bottom, mirroring the header's sticky top --
-          without this, reaching 이전/다음 required scrolling past a long
-          step's full content (many group cards, many result combos) first,
-          which is the exact friction being fixed here. */}
-      <div className="sticky bottom-0 z-10 -mx-4 mt-8 flex justify-between border-t border-neutral/15 bg-background px-4 py-3">
-        <button
-          type="button"
-          onClick={back}
-          disabled={stepIndex === 0}
-          className="rounded-full px-4 py-2 text-sm font-medium text-text-secondary transition-all duration-150 hover:bg-neutral/20 active:scale-95 active:bg-neutral/30 disabled:opacity-0"
-        >
-          이전
-        </button>
-        {stepKey !== "results" && (
+      {/* Fixed, not sticky -- sticky only pins once you've scrolled past its
+          normal flow position, so on a short step (little content, fits
+          one screen) it sat right after the content near the top, while on
+          a long step it correctly stuck to the bottom -- same code, two
+          different apparent positions, which read as inconsistent. Fixed
+          keeps it in exactly the same spot regardless of how much content
+          the current step has. */}
+      <div className="fixed inset-x-0 bottom-0 z-10 border-t border-neutral/15 bg-background">
+        <div className="mx-auto flex max-w-2xl justify-between px-4 py-3">
           <button
             type="button"
-            onClick={next}
-            className="rounded-full bg-primary px-6 py-2 text-sm font-semibold text-white shadow-button transition-all duration-150 hover:bg-primary-hover active:scale-95 active:bg-primary-active active:shadow-none"
+            onClick={back}
+            disabled={stepIndex === 0}
+            className="rounded-full px-4 py-2 text-sm font-medium text-text-secondary transition-all duration-150 hover:bg-neutral/20 active:scale-95 active:bg-neutral/30 disabled:opacity-0"
           >
-            다음
+            이전
           </button>
-        )}
+          {stepKey !== "results" && (
+            <button
+              type="button"
+              onClick={next}
+              className="rounded-full bg-primary px-6 py-2 text-sm font-semibold text-white shadow-button transition-all duration-150 hover:bg-primary-hover active:scale-95 active:bg-primary-active active:shadow-none"
+            >
+              다음
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -82,14 +82,19 @@ export const TimetableGrid = memo(function TimetableGrid({
 
   return (
     <div>
-      {/* Grid columns use a fixed minWidth (not just 1fr) so on narrow viewports
-          the day columns stay legible and the container scrolls horizontally
-          instead of squeezing every column unreadably thin. */}
-      <div className="overflow-x-auto rounded-lg border border-neutral/30 bg-background">
+      {/* Fixed column widths, not minmax(colWidth, 1fr) -- 1fr let day columns
+          grow to fill whatever space a wider container handed them (e.g. a
+          modal), which read as blocks rendering "too fat" once compact mode
+          started appearing somewhere roomier than the narrow cards it was
+          designed for. A fixed width still scrolls horizontally on a
+          viewport narrower than the grid's own natural width (that's what
+          overflow-x-auto is for) -- it just never grows past its intended
+          size when there's room to spare. */}
+      <div className="w-fit overflow-x-auto rounded-lg border border-neutral/30 bg-background">
         <div
           className={compact ? "grid text-[10px]" : "grid text-sm"}
           style={{
-            gridTemplateColumns: `${timeColWidth}rem repeat(${dayColumns.length}, minmax(${colWidth}rem, 1fr))`,
+            gridTemplateColumns: `${timeColWidth}rem repeat(${dayColumns.length}, ${colWidth}rem)`,
             gridTemplateRows: `${headerHeight} repeat(${layout.totalRows}, ${rowHeight})`,
             minWidth: `${timeColWidth + dayColumns.length * colWidth}rem`,
           }}
