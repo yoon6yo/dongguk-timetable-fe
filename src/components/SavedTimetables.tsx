@@ -138,7 +138,11 @@ function SavedDetail({ item }: { item: SavedTimetable }) {
         </p>
       </div>
 
-      <div className="grid gap-3 bg-background p-2 lg:grid-cols-2">
+      {/* Stacked, not side-by-side -- see StepResults.tsx for why: at this
+          page's max-w-2xl width, a 2-column split squeezes TimetableGrid's
+          5 weekday columns under a scrollable edge that reads as "cut off"
+          rather than "scroll for more". */}
+      <div className="space-y-3 bg-background p-2">
         <TimetableGrid courses={item.courses} />
         <CourseTable courses={coursesWithFreshRate} showRemarks />
       </div>

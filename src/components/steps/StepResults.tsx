@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { buildGenerationInput, type GenerationInput } from "@/lib/buildGenerationInput";
 import { rankCombinations, type ScoredCombination } from "@/lib/combinationGenerator";
@@ -103,6 +103,7 @@ export function StepResults() {
   // 다시 돌리지 않고, 생성 시점에 저장해둔 이 맵으로 메인 스레드에서 즉시 재정렬한다.
   const [genMaps, setGenMaps] = useState<Pick<GenerationInput, "blocksByCourseId" | "creditByCourseId"> | null>(null);
   const prettyExportRef = useRef<HTMLDivElement>(null);
+  const selectedDetailRef = useRef<HTMLDivElement>(null);
 
   const customEventCourses = useMemo(() => customEvents.map(customEventToCourseRow), [customEvents]);
   // 개인 일정은 groupsStore에 담기는 실제 과목이 아니지만, 그리드/표/저장 등 모든 화면에서
@@ -123,6 +124,13 @@ export function StepResults() {
   const activePresetKey = matchWeightPreset(weights);
 
   const handleSelectCombo = useCallback((key: string) => setSelectedKey(key), []);
+
+  // 후보가 최대 200개까지 나올 수 있어서, 선택한 조합의 상세가 그 아래에만
+  // 뜨면 목록 끝까지 직접 스크롤해야 확인할 수 있다 -- 카드를 고르는 순간
+  // 상세로 자동 스크롤해서, 몇 번째 카드를 골랐든 같은 경험이 되게 한다.
+  useEffect(() => {
+    if (selectedKey) selectedDetailRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [selectedKey]);
 
   function handleGenerate() {
     markGenerateAttempted();
@@ -274,7 +282,7 @@ export function StepResults() {
           </ul>
 
           {selected && (
-            <div className="space-y-3 rounded-lg border border-neutral/15 bg-surface p-3 shadow-card">
+            <div ref={selectedDetailRef} className="space-y-3 rounded-lg border border-neutral/15 bg-surface p-3 shadow-card">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">선택한 시간표</h3>
                 <p className="text-xs text-text-secondary">
@@ -282,7 +290,14 @@ export function StepResults() {
                 </p>
               </div>
 
-              <div className="grid gap-3 bg-background p-2 lg:grid-cols-2">
+              {/* Stacked, not side-by-side -- at this page's max-w-2xl width, a
+                  lg:grid-cols-2 split gives TimetableGrid roughly ~330px, well
+                  under the ~416px it needs for 5 weekday columns at readable
+                  size, so Thu/Fri ended up squeezed past the edge of an
+                  internal scroll box that wasn't obviously scrollable (looked
+                  cut off, not "scroll for more"). Full width removes the
+                  squeeze entirely instead of relying on a scroll affordance. */}
+              <div className="space-y-3 bg-background p-2">
                 <TimetableGrid courses={selectedCourses} />
                 <TimetableTable courses={selectedCourses} />
               </div>
