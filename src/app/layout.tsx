@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
 import { Footer } from "@/components/Footer";
+import { THEME_INIT_SCRIPT } from "@/components/ThemeToggle";
 
 import "./globals.css";
 
@@ -50,6 +51,10 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        {/* Runs before hydration so a stored light/dark override applies
+            before first paint, not after -- see ThemeToggle.tsx. Static,
+            build-time-authored string, not user input. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <div className="flex-1">{children}</div>
         <Footer />
       </body>

@@ -39,8 +39,13 @@
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* System preference drives dark mode by default (:not([data-theme="light"])
+   so an explicit light override always wins over the OS setting), and
+   ThemeToggle.tsx can force either mode via [data-theme] regardless of what
+   the OS reports -- the second block below wins in both directions since it
+   isn't gated behind the media query. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --background: #1c1815;
     --foreground: #f2ece4;
     --surface: #262019;
@@ -64,6 +69,31 @@
     --shadow-card-hover: 0 2px 4px rgba(0, 0, 0, 0.35), 0 6px 20px rgba(0, 0, 0, 0.4);
     --shadow-button: 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 10px rgba(245, 158, 30, 0.25);
   }
+}
+
+:root[data-theme="dark"] {
+  --background: #1c1815;
+  --foreground: #f2ece4;
+  --surface: #262019;
+  --primary: #f59e1e;
+  --primary-hover: #ffb648;
+  --primary-active: #ffc772;
+  --primary-tint: #3a2e1a;
+  --neutral: #4a443c;
+  --text-secondary: #b8afa2;
+
+  --series-1: #3987e5;
+  --series-2: #008300;
+  --series-3: #d55181;
+  --series-4: #c98500;
+  --series-5: #199e70;
+  --series-6: #d95926;
+  --series-7: #9085e9;
+  --series-8: #e66767;
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 10px rgba(0, 0, 0, 0.35);
+  --shadow-card-hover: 0 2px 4px rgba(0, 0, 0, 0.35), 0 6px 20px rgba(0, 0, 0, 0.4);
+  --shadow-button: 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 10px rgba(245, 158, 30, 0.25);
 }
 
 @theme inline {
