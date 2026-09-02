@@ -26,9 +26,13 @@ export function StepStart() {
       )}
 
       {status === "loaded" && semester && (
-        <div className="rounded-lg border border-primary/30 bg-primary-tint p-4 shadow-card">
-          <p className="text-sm text-text-secondary">최신 학기</p>
-          <p className="text-lg font-semibold">{semester.label}</p>
+        // Inline-width, not a full-row card -- "최신 학기 / 2026학년도 2학기"
+        // is two short lines of text; stretching that across the whole
+        // container the way the old card did left a wide box that was
+        // mostly empty space either side of the actual content.
+        <div className="inline-flex w-fit items-center gap-2 rounded-full border border-primary/30 bg-primary-tint px-4 py-2">
+          <span className="text-xs text-text-secondary">최신 학기</span>
+          <span className="text-sm font-semibold">{semester.label}</span>
         </div>
       )}
 

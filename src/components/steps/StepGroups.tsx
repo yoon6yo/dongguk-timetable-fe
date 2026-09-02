@@ -76,19 +76,25 @@ export function StepGroups() {
         + 그룹 추가
       </button>
 
-      <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={() => setActiveCourse(null)}>
-        <div className="space-y-3">
+      {/* Grid, not a vertical stack -- a single group (or the 개인 일정
+          card alone) used to render as a card stretched across the full
+          container width holding maybe two lines of actual content,
+          exactly the "가로로 긴 박스" the density pass was supposed to have
+          already fixed. Two columns means one card is only ever as wide as
+          it needs to be; it still stacks to one column on narrow screens. */}
+      <div className="grid gap-3 sm:grid-cols-2">
+        <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={() => setActiveCourse(null)}>
           {groups.map((group, index) => (
             <GroupCard key={group.id} group={group} index={index} courses={courses} courseById={courseById} />
           ))}
-          {groups.length === 0 && <p className="text-sm text-text-secondary">아직 만든 그룹이 없습니다.</p>}
-        </div>
-        <DragOverlay dropAnimation={null}>
-          {activeCourse && <DraggedRowPreview course={activeCourse} />}
-        </DragOverlay>
-      </DndContext>
+          {groups.length === 0 && <p className="text-sm text-text-secondary sm:col-span-2">아직 만든 그룹이 없습니다.</p>}
+          <DragOverlay dropAnimation={null}>
+            {activeCourse && <DraggedRowPreview course={activeCourse} />}
+          </DragOverlay>
+        </DndContext>
 
-      <CustomEventsSection />
+        <CustomEventsSection />
+      </div>
     </div>
   );
 }
