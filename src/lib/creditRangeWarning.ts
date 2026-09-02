@@ -12,22 +12,34 @@ function parseCredit(credit: string): number {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function creditsOf(group: CourseGroup, courseById: Map<number, CourseRow>): number[] {
+  return group.courseIds
+    .map((id) => courseById.get(id))
+    .filter((c): c is CourseRow => Boolean(c))
+    .map((c) => parseCredit(c.credit));
+}
+
 /**
- * Only required groups matter here — an optional group can always
- * contribute 0 credits, so it can never be the reason a combination is
- * impossible, only ever a way to add more. Only groups that already have at
- * least one course count toward the credit sums; a required group with zero
- * courses is reported separately since it blocks generation outright
- * (0 candidates for a required slot), independent of credit math.
+ * Required groups are the only ones that matter for "above-max": an
+ * optional group can always contribute 0 credits, so it can never be the
+ * reason a combination exceeds the cap — only required groups' forced
+ * minimum can. Only groups that already have at least one course count
+ * toward that sum; a required group with zero courses is reported
+ * separately since it blocks generation outright (0 candidates for a
+ * required slot), independent of credit math.
  *
  * "above-max" is unconditional: even picking the single lowest-credit
  * course in every required group already exceeds the cap, so no choice of
  * optional courses can ever bring it back under.
  *
- * "below-min" is the softer, still-useful case: even picking the
- * highest-credit course in every required group doesn't reach the floor on
- * its own — the user isn't stuck, but they now know they *must* add
- * optional courses to close the gap, not just that they *could*.
+ * "below-min" is the opposite direction, so it needs the opposite scope:
+ * optional groups CAN help reach the floor (that's their whole point), so
+ * the reachable ceiling has to include every optional group's best
+ * available course too, not just the required groups'. Checking required
+ * groups alone here was a real bug, not just a wording nitpick — it fired
+ * even when the user had already added more than enough credits in a
+ * selection group to clear the floor, because that group's courses were
+ * never counted.
  */
 export function computeCreditRangeWarning(
   groups: CourseGroup[],
@@ -44,22 +56,28 @@ export function computeCreditRangeWarning(
   }
 
   let sumMin = 0;
-  let sumMax = 0;
+  let sumMaxRequired = 0;
   for (const group of requiredGroups) {
-    const credits = group.courseIds
-      .map((id) => courseById.get(id))
-      .filter((c): c is CourseRow => Boolean(c))
-      .map((c) => parseCredit(c.credit));
+    const credits = creditsOf(group, courseById);
     if (credits.length === 0) continue;
     sumMin += Math.min(...credits);
-    sumMax += Math.max(...credits);
+    sumMaxRequired += Math.max(...credits);
   }
 
   if (sumMin > maxCredit) {
     return { type: "above-max", minPossible: sumMin, maxCredit };
   }
-  if (sumMax < minCredit) {
-    return { type: "below-min", maxPossible: sumMax, minCredit };
+
+  let sumMaxOptional = 0;
+  for (const group of groups.filter((g) => !g.required)) {
+    const credits = creditsOf(group, courseById);
+    if (credits.length === 0) continue;
+    sumMaxOptional += Math.max(...credits);
+  }
+
+  const sumMaxAll = sumMaxRequired + sumMaxOptional;
+  if (sumMaxAll < minCredit) {
+    return { type: "below-min", maxPossible: sumMaxAll, minCredit };
   }
   return null;
 }

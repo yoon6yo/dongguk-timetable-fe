@@ -54,7 +54,7 @@ describe("computeCreditRangeWarning", () => {
     expect(result).toEqual({ type: "empty-required", groupName: "전공필수" });
   });
 
-  it("ignores optional groups entirely, even if empty (not flagged, not counted)", () => {
+  it("an empty optional group is never flagged and contributes nothing", () => {
     const courseById = new Map([course(1, "3.0"), course(2, "3.0"), course(3, "3.0"), course(4, "3.0")]);
     const groups = [
       group({ id: "g1", courseIds: [1] }),
@@ -64,6 +64,31 @@ describe("computeCreditRangeWarning", () => {
       group({ id: "g5", required: false, courseIds: [] }), // empty optional group
     ];
     expect(computeCreditRangeWarning(groups, courseById, 12, 21)).toBeNull();
+  });
+
+  it("counts an optional group's best course toward the below-min floor (regression: previously ignored entirely)", () => {
+    // required alone: 6 credits, well under the 12 floor -- but a selection
+    // group already has a 9-credit course sitting in it, which is enough to
+    // clear the floor once picked. Should NOT warn.
+    const courseById = new Map([course(1, "3.0"), course(2, "3.0"), course(3, "9.0")]);
+    const groups = [
+      group({ id: "g1", courseIds: [1] }),
+      group({ id: "g2", courseIds: [2] }),
+      group({ id: "g3", required: false, courseIds: [3] }),
+    ];
+    expect(computeCreditRangeWarning(groups, courseById, 12, 21)).toBeNull();
+  });
+
+  it("still reports below-min when required + every optional group's best course together fall short", () => {
+    const courseById = new Map([course(1, "3.0"), course(2, "3.0"), course(3, "2.0")]);
+    const groups = [
+      group({ id: "g1", courseIds: [1] }),
+      group({ id: "g2", courseIds: [2] }),
+      group({ id: "g3", required: false, courseIds: [3] }),
+    ];
+    // required 3+3 + optional best 2 = 8, still under the 12 floor
+    const result = computeCreditRangeWarning(groups, courseById, 12, 21);
+    expect(result).toEqual({ type: "below-min", maxPossible: 8, minCredit: 12 });
   });
 
   it("reports above-max when even the lowest-credit pick per required group exceeds the cap", () => {

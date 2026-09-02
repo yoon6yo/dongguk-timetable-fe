@@ -96,7 +96,11 @@ export function Wizard() {
         <StepComponent />
       </div>
 
-      <div className="mt-8 flex justify-between">
+      {/* Sticky to the viewport bottom, mirroring the header's sticky top --
+          without this, reaching 이전/다음 required scrolling past a long
+          step's full content (many group cards, many result combos) first,
+          which is the exact friction being fixed here. */}
+      <div className="sticky bottom-0 z-10 -mx-4 mt-8 flex justify-between border-t border-neutral/15 bg-background px-4 py-3">
         <button
           type="button"
           onClick={back}
