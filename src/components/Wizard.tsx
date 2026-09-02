@@ -43,73 +43,47 @@ export function Wizard() {
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col px-4 py-6">
-      <div className="sticky top-0 z-10 -mx-4 bg-background px-4 pb-2">
-        {/* watchlist/saved links deliberately removed from this step-flow nav --
-            they're one exit link away via 홈, and both are now reachable
-            without leaving the wizard anyway (group search can add straight
-            to the watchlist; see CourseSearchPanel usage in StepGroups). */}
-        <div className="flex items-center pt-1">
+      {/* Rebuilt from scratch, not just narrowed -- direct feedback rejected
+          the whole composition, not just its width. The circle-and-
+          connecting-line stepper (three ~28px badges bridged by full-width
+          lines) was the single biggest vertical/visual weight on this
+          screen for what it communicates: which of 3 steps you're on. A
+          thin segmented bar + step count does the same job in a fraction
+          of the height, and the eyebrow-label + heading pattern below
+          matches Landing.tsx's voice instead of introducing a third
+          different header style in the app. */}
+      <div className="sticky top-0 z-10 -mx-4 bg-background px-4 pb-3">
+        <div className="flex items-center justify-between pt-1">
           <Link href="/" className="text-xs font-medium text-text-secondary hover:text-primary">
             ← 홈
           </Link>
+          <span className="text-xs font-medium text-text-secondary">
+            {stepIndex + 1} / {WIZARD_STEPS.length}
+          </span>
         </div>
-        <ol
-          className="mb-8 grid grid-flow-col items-start"
-          style={{ gridTemplateColumns: `repeat(${WIZARD_STEPS.length}, 1fr)` }}
-        >
-          {WIZARD_STEPS.map((key, idx) => {
-            const isDone = idx < stepIndex;
-            const isCurrent = idx === stepIndex;
-            return (
-              <li key={key} className="relative flex flex-col items-center">
-                {idx > 0 && (
-                  <div
-                    className={`absolute right-1/2 top-3.5 h-0.5 w-full -translate-y-1/2 transition-colors duration-300 ${
-                      isDone || isCurrent ? "bg-primary" : "bg-neutral/30"
-                    }`}
-                  />
-                )}
-                <div
-                  className={`relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold transition-all duration-300 ${
-                    isDone
-                      ? "bg-primary text-white"
-                      : isCurrent
-                        ? "bg-primary text-white ring-4 ring-primary-tint"
-                        : "bg-neutral/30 text-text-secondary"
-                  }`}
-                >
-                  {isDone ? (
-                    <svg viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
-                      <path
-                        fillRule="evenodd"
-                        d="M16.704 5.29a1 1 0 010 1.42l-7.5 7.5a1 1 0 01-1.415 0l-3.5-3.5a1 1 0 111.415-1.42L8.5 12.085l6.79-6.795a1 1 0 011.414 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  ) : (
-                    idx + 1
-                  )}
-                </div>
-                <span
-                  className={`mt-1.5 hidden text-center text-[11px] leading-tight sm:block ${
-                    isCurrent ? "font-semibold text-foreground" : "text-text-secondary"
-                  }`}
-                >
-                  {STEP_TITLES[key]}
-                </span>
-              </li>
-            );
-          })}
-        </ol>
 
-        <h1 className="text-xl font-bold">{STEP_TITLES[stepKey]}</h1>
+        <div className="mt-3 flex gap-1.5" role="progressbar" aria-valuenow={stepIndex + 1} aria-valuemin={1} aria-valuemax={WIZARD_STEPS.length}>
+          {WIZARD_STEPS.map((key, idx) => (
+            <div
+              key={key}
+              className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
+                idx <= stepIndex ? "bg-primary" : "bg-neutral/25"
+              }`}
+            />
+          ))}
+        </div>
+
+        <div className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-primary">
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
+          STEP {stepIndex + 1}
+        </div>
+        <h1 className="text-2xl font-bold tracking-tight">{STEP_TITLES[stepKey]}</h1>
         {semester && (
           <p className="mt-1 text-xs text-text-secondary">
             시간표 정보 {formatSyncTime(semester.coursesSyncedAt)} 기준 · 경쟁률{" "}
             {formatSyncTime(semester.appliedCountSyncedAt)} 기준 · {courseCount}개 과목 로드됨
           </p>
         )}
-        {!semester && <div className="mb-6" />}
 
         {showSemesterMismatchNotice && (
           <p className="mt-2 rounded-lg bg-primary-tint p-2 text-xs text-foreground">
