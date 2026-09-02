@@ -42,7 +42,7 @@ export function Wizard() {
   const StepComponent = STEP_COMPONENTS[stepKey];
 
   return (
-    <div className="mx-auto flex max-w-4xl flex-col px-4 py-6">
+    <div className="mx-auto flex max-w-2xl flex-col px-4 py-6">
       <div className="sticky top-0 z-10 -mx-4 bg-background px-4 pb-2">
         {/* watchlist/saved links deliberately removed from this step-flow nav --
             they're one exit link away via 홈, and both are now reachable
