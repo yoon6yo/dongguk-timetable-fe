@@ -76,19 +76,20 @@ export function StepGroups() {
         + 그룹 추가
       </button>
 
-      {/* Groups are this step's actual subject, so they get the grid --
-          multiple candidate-course cards naturally tile two-up instead of
-          each stretching the full row for two lines of content. 개인 일정
-          is a secondary, optional utility, not a peer to a course group;
-          pairing it 50/50 next to "그룹 1" as an equal-weight card was the
-          mechanical fix, not a real hierarchy. It's a separate, deliberately
-          lighter-weight section below instead -- see CustomEventsSection. */}
-      <div className="grid gap-3 sm:grid-cols-2">
+      {/* Reverted to a full-width single-column stack -- a group card holds
+          a growing CourseTable (학수번호/시간/강의실/경쟁률 columns), and
+          squeezing that into a fixed half-width grid cell recreated the
+          exact "table content forced narrower than it needs" problem the
+          add-course modal had. An empty/sparse group card being wide isn't
+          the actual defect; a *stretched, mostly-empty-looking* one is --
+          GroupCard's own padding/layout is what should stay tight, not the
+          container width. */}
+      <div className="space-y-3">
         <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={() => setActiveCourse(null)}>
           {groups.map((group, index) => (
             <GroupCard key={group.id} group={group} index={index} courses={courses} courseById={courseById} />
           ))}
-          {groups.length === 0 && <p className="text-sm text-text-secondary sm:col-span-2">아직 만든 그룹이 없습니다.</p>}
+          {groups.length === 0 && <p className="text-sm text-text-secondary">아직 만든 그룹이 없습니다.</p>}
           <DragOverlay dropAnimation={null}>
             {activeCourse && <DraggedRowPreview course={activeCourse} />}
           </DragOverlay>
@@ -382,7 +383,7 @@ function AddCourseModal({
   const removeWatchCourse = useWatchlistStore((s) => s.removeCourse);
 
   return (
-    <Modal title={`"${displayName}"에 과목 추가`} onClose={onClose} maxWidthClassName="max-w-3xl">
+    <Modal title={`"${displayName}"에 과목 추가`} onClose={onClose} maxWidthClassName="max-w-6xl">
       <CourseSearchPanel
         courses={courses}
         defaultSort="default"

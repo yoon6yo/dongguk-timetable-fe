@@ -12,10 +12,12 @@ export function Modal({
   onClose: () => void;
   children: React.ReactNode;
   /** max-w-lg fits a form (AddCustomEventModal, StepWeights' 고급 설정), but
-   * a course-search table (학수번호/시간/강의실/경쟁률/교수명/학과 + 담기 button)
-   * at 512px pushed its own action button past the visible edge, forcing a
-   * horizontal scroll just to click 담기 -- a real usability bug, not a
-   * width-aesthetics one. Callers hosting a CourseTable pass a wider value. */
+   * a course-search table has up to 9 columns (강의명/학수번호/시간/강의실/
+   * 경쟁률/교수명/학과/비고 + action buttons) -- at 512px, then even at
+   * 768px, real rows still pushed the action column past the visible edge,
+   * forcing a horizontal scroll just to click 담기. A real usability bug,
+   * not a width-aesthetics one. Callers hosting a full CourseTable pass a
+   * wide value (max-w-6xl). */
   maxWidthClassName?: string;
 }) {
   useEffect(() => {
