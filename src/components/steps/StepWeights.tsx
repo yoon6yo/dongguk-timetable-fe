@@ -45,17 +45,22 @@ export function StepWeights() {
         </div>
       </div>
 
-      <p className="text-text-secondary">
-        슬라이더를 조절해 시간표를 어떤 기준으로 정렬할지 정하세요. 모든 슬라이더가 함께 반영되니, 한
-        기준만 보고 싶다면 나머지를 0에 가깝게 낮추세요. &ldquo;오전 ↔ 오후 선호&rdquo;는 가운데(50)에
-        두면 신경 쓰지 않는다는 뜻이고, 양쪽 끝으로 갈수록 그 방향을 강하게 반영합니다.
-      </p>
+      {/* One line, not three -- the "sliders combine" and timeOfDay-neutral
+          details used to be spelled out here regardless of whether anyone
+          asked. Both still exist, just as hover context on the exact
+          control they explain instead of required reading up front. */}
+      <p className="text-text-secondary">슬라이더를 조절해 정렬 기준을 정하세요.</p>
 
-      <div className="space-y-3 rounded-lg border border-neutral/15 bg-surface p-4 shadow-card">
+      <div
+        className="space-y-3 rounded-lg border border-neutral/15 bg-surface p-4 shadow-card"
+        title="모든 슬라이더가 함께 반영돼요. 한 기준만 보고 싶다면 나머지를 0에 가깝게 낮추세요."
+      >
         {SLIDERS.map(({ key, label, low, high }, idx) => (
           <div key={key} className={idx > 0 ? "border-t border-neutral/20 pt-3" : ""}>
             <div className="mb-2 flex items-center justify-between text-sm">
-              <span className="font-medium">{label}</span>
+              <span className="font-medium" title={key === "timeOfDay" ? "가운데(50)에 두면 신경 쓰지 않는다는 뜻이에요." : undefined}>
+                {label}
+              </span>
               <span className="sr-only" aria-live="polite">
                 {weights[key]}
               </span>

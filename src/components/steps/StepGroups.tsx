@@ -63,11 +63,12 @@ export function StepGroups() {
 
   return (
     <div className="space-y-4">
-      <p className="text-text-secondary">
-        그룹을 만들고 각 그룹에 후보 과목을 담으세요. 그룹 이름은 안 정해도 괜찮아요 — 그룹에서 한 과목을
-        꼭 골라야 하는지(필수) 안 골라도 되는지(선택)만 정하면 됩니다. 담은 과목 옆의 점 6개 손잡이를
-        끌어다 다른 그룹에 놓으면 과목을 옮길 수 있어요.
-      </p>
+      {/* Trimmed to one line -- the 필수/선택 rule and drag-to-move mechanic
+          used to be spelled out here up front, but both are now discoverable
+          exactly where they're used (title on the toggle button, title on
+          the drag handle) instead of asking the user to read and remember
+          them before touching anything. */}
+      <p className="text-text-secondary">그룹을 만들고 각 그룹에 후보 과목을 담으세요.</p>
 
       <button
         type="button"
@@ -270,6 +271,7 @@ function GroupCard({
           <button
             type="button"
             onClick={() => toggleRequired(group.id)}
+            title={group.required ? "이 그룹에서 과목을 꼭 하나 골라야 해요" : "이 그룹은 안 골라도 괜찮아요"}
             className={`rounded-full px-3 py-1 text-xs font-semibold transition-all duration-150 active:scale-95 ${
               group.required ? "bg-primary text-white" : "bg-neutral/30 text-text-secondary hover:bg-neutral/50"
             }`}
