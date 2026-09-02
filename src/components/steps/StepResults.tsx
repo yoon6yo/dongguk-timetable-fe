@@ -286,69 +286,83 @@ export function StepResults() {
                   <p className="text-xs text-text-secondary">
                     {selectedCourses.length}과목 · {selected.totalCredit}학점
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => setExportOpen((v) => !v)}
-                    aria-expanded={exportOpen}
-                    className="flex items-center gap-1 rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
-                  >
-                    내보내기
-                    <svg
-                      viewBox="0 0 20 20"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                      className={`h-3 w-3 transition-transform duration-150 ${exportOpen ? "rotate-180" : ""}`}
+                  {/* A small anchored dropdown, not an inline row -- a row
+                      revealed below a right-aligned trigger started from the
+                      left edge, visually disconnected from the button that
+                      opened it. `relative`/`absolute right-0` keeps the panel
+                      pinned directly under the button instead. */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setExportOpen((v) => !v)}
+                      aria-expanded={exportOpen}
+                      className="flex items-center gap-1 rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
                     >
-                      <path d="M5 7.5L10 12.5L15 7.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </button>
+                      내보내기
+                      <svg
+                        viewBox="0 0 20 20"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                        className={`h-3 w-3 transition-transform duration-150 ${exportOpen ? "rotate-180" : ""}`}
+                      >
+                        <path d="M5 7.5L10 12.5L15 7.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </button>
+                    {exportOpen && (
+                      <div className="absolute right-0 top-full z-20 mt-1 w-48 space-y-0.5 rounded-lg border border-neutral/20 bg-surface p-1.5 shadow-card-hover">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleExportPng();
+                            setExportOpen(false);
+                          }}
+                          className="block w-full rounded-md px-2 py-1.5 text-left text-xs transition-colors duration-150 hover:bg-neutral/15"
+                        >
+                          이미지(PNG)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleExportCsv();
+                            setExportOpen(false);
+                          }}
+                          className="block w-full rounded-md px-2 py-1.5 text-left text-xs transition-colors duration-150 hover:bg-neutral/15"
+                        >
+                          CSV
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleExportTxt();
+                            setExportOpen(false);
+                          }}
+                          className="block w-full rounded-md px-2 py-1.5 text-left text-xs transition-colors duration-150 hover:bg-neutral/15"
+                        >
+                          텍스트
+                        </button>
+                        <label className="flex items-center gap-1.5 border-t border-neutral/15 px-2 pt-1.5 text-xs text-text-secondary">
+                          <input
+                            type="checkbox"
+                            checked={blackoutExport}
+                            onChange={(e) => setBlackoutExport(e.target.checked)}
+                          />
+                          정보 가리기(색 블록만)
+                        </label>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {exportOpen && (
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="flex items-center gap-1 rounded-full border border-neutral pl-3 pr-1 text-xs font-semibold">
-                      <button
-                        type="button"
-                        onClick={handleExportPng}
-                        className="py-1 transition-colors duration-150 hover:text-primary"
-                      >
-                        이미지(PNG)
-                      </button>
-                      <span className="h-3 w-px bg-neutral/30" />
-                      <label className="flex items-center gap-1 rounded-full px-2 py-1 font-normal text-text-secondary hover:text-primary">
-                        <input
-                          type="checkbox"
-                          checked={blackoutExport}
-                          onChange={(e) => setBlackoutExport(e.target.checked)}
-                        />
-                        정보 가리기(색 블록만)
-                      </label>
-                    </span>
-                    <button
-                      type="button"
-                      onClick={handleExportCsv}
-                      className="rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
-                    >
-                      CSV
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleExportTxt}
-                      className="rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
-                    >
-                      텍스트
-                    </button>
-                  </div>
-                )}
-
-                {/* Side-by-side, not stacked -- this only works because a modal
-                    can be wider than the page's own max-w-2xl column. `compact`
-                    keeps the grid from dominating the space now that it's
-                    sharing the row with the full table (which already carries
-                    every detail the compact grid drops). */}
-                <div className="grid gap-3 bg-background p-2 sm:grid-cols-2">
-                  <TimetableGrid courses={selectedCourses} compact />
+                {/* Stacked, not side-by-side -- side-by-side kept failing at
+                    every width tried (squeezed table, then a bloated grid,
+                    then a too-small one) because giving the 8-column table
+                    only half the modal is never really enough room. Full
+                    width, one on top of the other, removes the tradeoff
+                    outright. Non-compact now that the grid has a full row to
+                    itself instead of sharing one. */}
+                <div className="space-y-3 bg-background p-2">
+                  <TimetableGrid courses={selectedCourses} />
                   <TimetableTable courses={selectedCourses} />
                 </div>
 

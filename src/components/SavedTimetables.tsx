@@ -138,57 +138,70 @@ function SavedDetail({ item, onClose }: { item: SavedTimetable; onClose: () => v
           <p className="text-xs text-text-secondary">
             {item.courses.length}과목 · {item.totalCredit}학점
           </p>
-          <button
-            type="button"
-            onClick={() => setExportOpen((v) => !v)}
-            aria-expanded={exportOpen}
-            className="flex items-center gap-1 rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
-          >
-            내보내기
-            <svg
-              viewBox="0 0 20 20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              className={`h-3 w-3 transition-transform duration-150 ${exportOpen ? "rotate-180" : ""}`}
+          {/* A small anchored dropdown, not an inline row -- see
+              StepResults.tsx for why: a row revealed below a right-aligned
+              trigger started from the left edge, disconnected from the
+              button that opened it. */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setExportOpen((v) => !v)}
+              aria-expanded={exportOpen}
+              className="flex items-center gap-1 rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
             >
-              <path d="M5 7.5L10 12.5L15 7.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
+              내보내기
+              <svg
+                viewBox="0 0 20 20"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                className={`h-3 w-3 transition-transform duration-150 ${exportOpen ? "rotate-180" : ""}`}
+              >
+                <path d="M5 7.5L10 12.5L15 7.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            {exportOpen && (
+              <div className="absolute right-0 top-full z-20 mt-1 w-40 space-y-0.5 rounded-lg border border-neutral/20 bg-surface p-1.5 shadow-card-hover">
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleExportPng();
+                    setExportOpen(false);
+                  }}
+                  className="block w-full rounded-md px-2 py-1.5 text-left text-xs transition-colors duration-150 hover:bg-neutral/15"
+                >
+                  이미지(PNG)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    exportTimetableAsCsv(item.courses, "timetable.csv");
+                    setExportOpen(false);
+                  }}
+                  className="block w-full rounded-md px-2 py-1.5 text-left text-xs transition-colors duration-150 hover:bg-neutral/15"
+                >
+                  CSV
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    exportTimetableAsTxt(item.courses, "timetable.txt");
+                    setExportOpen(false);
+                  }}
+                  className="block w-full rounded-md px-2 py-1.5 text-left text-xs transition-colors duration-150 hover:bg-neutral/15"
+                >
+                  텍스트
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
-        {exportOpen && (
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={handleExportPng}
-              className="rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
-            >
-              이미지(PNG)
-            </button>
-            <button
-              type="button"
-              onClick={() => exportTimetableAsCsv(item.courses, "timetable.csv")}
-              className="rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
-            >
-              CSV
-            </button>
-            <button
-              type="button"
-              onClick={() => exportTimetableAsTxt(item.courses, "timetable.txt")}
-              className="rounded-full border border-neutral px-3 py-1 text-xs font-semibold transition-all duration-150 hover:border-primary hover:text-primary active:scale-95"
-            >
-              텍스트
-            </button>
-          </div>
-        )}
-
-        {/* Side-by-side, not stacked -- see StepResults.tsx for the same
-            pattern: a modal can be wider than the page's own max-w-2xl
-            column, so `compact` + a table sharing the row fits without
-            squeezing Thu/Fri past a scroll edge. */}
-        <div className="grid gap-3 bg-background p-2 sm:grid-cols-2">
-          <TimetableGrid courses={item.courses} compact />
+        {/* Stacked, not side-by-side -- see StepResults.tsx for why:
+            side-by-side kept failing at every width tried. Non-compact now
+            that the grid has a full row to itself. */}
+        <div className="space-y-3 bg-background p-2">
+          <TimetableGrid courses={item.courses} />
           <CourseTable courses={coursesWithFreshRate} showRemarks />
         </div>
 
